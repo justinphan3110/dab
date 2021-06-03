@@ -158,14 +158,8 @@ def backtranslate_interactively(
 
 def decode_interactively(estimator,
                          input_generator,
-                         problem_name,
                          hparams,
-                         decode_hp,
                          checkpoint_path=None):
-  """Compute predictions on entries in filename and write them out."""
-  decode_hp.batch_size = 1
-  tf.logging.info(
-      "decode_hp.batch_size not specified; default=%d" % decode_hp.batch_size)
 
   # Inputs vocabulary is set to targets if there are no inputs in the problem,
   # e.g., for language models where the inputs are just a prefix of targets.
@@ -206,17 +200,7 @@ def decode_interactively(estimator,
   result_iter = estimator.predict(input_fn, checkpoint_path=checkpoint_path)
 
   for result in result_iter:
-    _, decoded_outputs, _ = decoding.log_decode_results(
-        result["inputs"],
-        result["outputs"],
-        problem_name,
-        None,
-        inputs_vocab,
-        targets_vocab,
-        log_results=False,
-        skip_eos_postprocess=decode_hp.skip_eos_postprocess)
-
-    yield decoded_outputs
+    print(result['logits'])
 
 
 def evaluate_iteractively(estimator,
@@ -281,8 +265,7 @@ def evaluate_iteractively(estimator,
     loss_array = []
     for np_id, np_output_id in tqdm(zip(np_ids, np_output_ids)):
       def eval_input_fn(params):
-        print(params)
-        batch_size = 8
+        batch_size = params["batch_size"]
         dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np.array(np_id, dtype=np.int32), "targets": np.array(np_output_id, dtype=np.int32)}))
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (1, 1, 1)), "targets": tf.reshape(ex["targets"], (1, 1, 1))}, tf.reshape(ex["targets"], (1, 1, 1))) )
@@ -570,9 +553,16 @@ def t2t_decoder(problem_name, data_dir,
                 checkpoint_path):
   hp, decode_hp, estimator = create_hp_and_estimator(
       problem_name, data_dir, checkpoint_path, decode_to_file)
-  decode_from_file_fn(
+
+
+  lines = []
+  with open(decode_from_file, encoding='utf-8') as file:
+    for line in file:
+      lines.append(line.strip())
+      
+  decode_interactively(
       estimator, decode_from_file,
-      hp, decode_hp, decode_to_file,
+      hp,
       checkpoint_path=checkpoint_path)
 
 
