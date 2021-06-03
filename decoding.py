@@ -16,6 +16,7 @@ import time
 
 import numpy as np
 import six
+from tqdm import tqdm
 
 from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
@@ -278,7 +279,7 @@ def evaluate_iteractively(estimator,
     np_output_ids = np.array(batch_output_ids, dtype=np.int32)
 
     loss_array = []
-    for np_id, np_output_id in zip(np_ids, np_output_ids):
+    for np_id, np_output_id in tqdm(zip(np_ids, np_output_ids)):
       def eval_input_fn(params):
         print(params)
         batch_size = 8
