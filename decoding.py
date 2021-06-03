@@ -39,8 +39,8 @@ def create_hp_and_estimator(
       FLAGS.hparams,
       data_dir=os.path.expanduser(data_dir),
       problem_name=problem_name)
-  hp.model_dir = checkpoint_path
-  hp.output_dir = checkpoint_path
+  # hp.model_dir = checkpoint_path
+  # hp.output_dir = checkpoint_path
   decode_hp = decoding.decode_hparams(FLAGS.decode_hparams)
   decode_hp.shards = FLAGS.decode_shards
   decode_hp.shard_id = FLAGS.worker_id
@@ -51,7 +51,7 @@ def create_hp_and_estimator(
 
   FLAGS.checkpoint_path = checkpoint_path
 
-  config = t2t_trainer.create_run_config(hp)
+  config = t2t_trainer.create_run_config(hp, checkpoint_path)
   hp.add_hparam("model_dir", config.model_dir)
   estimator = trainer_lib.create_estimator(
       FLAGS.model,
