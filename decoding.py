@@ -217,7 +217,7 @@ def decode_interactively(estimator,
     yield decoded_outputs
 
 
-def evaluate_interactively(estimator,
+def evaluate_iteractively(estimator,
                         hparams,
                         decode_hp,
                         inputs_file,
@@ -584,7 +584,7 @@ def t2t_decoder_eval(problem_name, data_dir,
                 checkpoint_path):
   hp, decode_hp, estimator = create_hp_and_estimator(
       problem_name, data_dir, checkpoint_path, loss_to_file)
-  evaluate_from_file_fn(
+  evaluate_iteractively(
       estimator,
       hp, decode_hp, inputs_file, targets_file, loss_to_file,
       checkpoint_path=checkpoint_path)
