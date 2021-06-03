@@ -293,7 +293,7 @@ def evaluate_iteractively(estimator,
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
     tf.logging.info("Writing decodes into %s" % loss_filename)
-    outfile = tf.gfile.Open(loss_filename, "w", encoding='utf-8')
+    outfile = tf.gfile.Open(loss_filename, "w")
 
     for l in loss_array:
       outfile.write(f'{l}\n')
