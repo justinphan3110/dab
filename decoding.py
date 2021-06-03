@@ -33,13 +33,13 @@ FLAGS = flags.FLAGS
 def create_hp_and_estimator(
     problem_name, data_dir, checkpoint_path, decode_to_file=None):
   trainer_lib.set_random_seed(FLAGS.random_seed)
-
+  
   hp = trainer_lib.create_hparams(
       FLAGS.hparams_set,
       FLAGS.hparams,
       data_dir=os.path.expanduser(data_dir),
       problem_name=problem_name)
-
+  # hp.model_dir = checkpoint_path
   decode_hp = decoding.decode_hparams(FLAGS.decode_hparams)
   decode_hp.shards = FLAGS.decode_shards
   decode_hp.shard_id = FLAGS.worker_id
@@ -49,10 +49,13 @@ def create_hp_and_estimator(
   decode_hp.decode_reference = None
 
   FLAGS.checkpoint_path = checkpoint_path
+
+  config = t2t_trainer.create_run_config(hp)
+  hp.add_hparam("model_dir", config.model_dir)
   estimator = trainer_lib.create_estimator(
       FLAGS.model,
       hp,
-      t2t_trainer.create_run_config(hp),
+      config,
       decode_hparams=decode_hp,
       use_tpu=FLAGS.use_tpu)
   return hp, decode_hp, estimator
@@ -214,8 +217,85 @@ def decode_interactively(estimator,
     yield decoded_outputs
 
 
+def evaluate_from_file_fn(estimator,
+                        hparams,
+                        decode_hp,
+                        inputs_file,
+                        targets_file,
+                        loss_to_file,
+                        checkpoint_path=None):
+  if not decode_hp.batch_size:
+    decode_hp.batch_size = 32
+    tf.logging.info(
+        "decode_hp.batch_size not specified; default=%d" % decode_hp.batch_size)
+  # Inputs vocabulary is set to targets if there are no inputs in the problem,
+  # e.g., for language models where the inputs are just a prefix of targets.
+  p_hp = hparams.problem_hparams
+  has_input = "inputs" in p_hp.vocabulary
+  inputs_vocab_key = "inputs" if has_input else "targets"
+  inputs_vocab = p_hp.vocabulary[inputs_vocab_key]
+  targets_vocab = p_hp.vocabulary["targets"]
+  problem_name = FLAGS.problem
+  filename = decoding._add_shard_to_filename(inputs_file, decode_hp)
+  outfilename = decoding._add_shard_to_filename(targets_file, decode_hp)
+
+  tf.logging.info("Performing decoding from file (%s)." % filename)
+  if has_input:
+    sorted_inputs, _ = decoding._get_sorted_inputs(
+        filename, decode_hp.delimiter)
+    if outfilename:
+      sorted_outputs, _ = decoding._get_sorted_inputs(outfilename, decode_hp.delimiter)
+  else:
+    sorted_inputs = decoding._get_language_modeling_inputs(
+        filename, decode_hp.delimiter, repeat=decode_hp.num_decodes)
+
+  if estimator.config.use_tpu:
+    length = getattr(hparams, "length", 0) or hparams.max_length
+    batch_ids = []
+
+    # Get ids and input function for prediction
+    for line in sorted_inputs:
+      if has_input:
+        ids = inputs_vocab.encode(line.strip()) + [1]
+      else:
+        ids = targets_vocab.encode(line)
+      if len(ids) < length:
+        ids.extend([0] * (length - len(ids)))
+      else:
+        ids = ids[:length]
+      batch_ids.append(ids)
+    np_ids = np.array(batch_ids, dtype=np.int32)
+
+    # Get ids of output and function for evaluation
+    batch_output_ids = []
+    if outfilename:
+      for line in sorted_outputs:
+        if has_input:
+          ids = inputs_vocab.encode(line.strip()) + [1]
+        if len(ids) < length:
+          ids.extend([0] * (length - len(ids)))
+        else:
+          ids = ids[:length]
+        batch_output_ids.append(ids)
+      np_output_ids = np.array(batch_output_ids, dtype=np.int32)
+
+
+      def eval_input_fn(params):
+        print(params)
+        batch_size = 8
+        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np_ids, "targets": np_output_ids}))
+        dataset = dataset.map(
+          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
+        dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
+        return dataset
+  loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
+  print(loss)
+
+  
+    
+
 def decode_from_file_fn(estimator,
-                        filename,
+                        filename, 
                         hparams,
                         decode_hp,
                         decode_to_file=None,
@@ -235,6 +315,8 @@ def decode_from_file_fn(estimator,
   targets_vocab = p_hp.vocabulary["targets"]
   problem_name = FLAGS.problem
   filename = decoding._add_shard_to_filename(filename, decode_hp)
+
+
   tf.logging.info("Performing decoding from file (%s)." % filename)
   if has_input:
     sorted_inputs, sorted_keys = decoding._get_sorted_inputs(
@@ -243,12 +325,15 @@ def decode_from_file_fn(estimator,
     sorted_inputs = decoding._get_language_modeling_inputs(
         filename, decode_hp.delimiter, repeat=decode_hp.num_decodes)
     sorted_keys = range(len(sorted_inputs))
+
   num_sentences = len(sorted_inputs)
   num_decode_batches = (num_sentences - 1) // decode_hp.batch_size + 1
 
   if estimator.config.use_tpu:
     length = getattr(hparams, "length", 0) or hparams.max_length
     batch_ids = []
+
+    # Get ids and input function for prediction
     for line in sorted_inputs:
       if has_input:
         ids = inputs_vocab.encode(line.strip()) + [1]
@@ -278,8 +363,8 @@ def decode_from_file_fn(estimator,
       example = gen_fn()
       return decoding._decode_input_tensor_to_features_dict(example, hparams, decode_hp)
   decodes = []
+  scores_array = []
   result_iter = estimator.predict(input_fn, checkpoint_path=checkpoint_path)
-
   start_time = time.time()
   total_time_per_step = 0
   total_cnt = 0
@@ -307,6 +392,7 @@ def decode_from_file_fn(estimator,
       for k, beam in enumerate(output_beams):
         tf.logging.info("BEAM %d:" % k)
         score = scores and scores[k]
+        print(score)
         _, decoded_outputs, _ = decoding.log_decode_results(
             result["inputs"],
             beam,
@@ -336,6 +422,7 @@ def decode_from_file_fn(estimator,
           targets_vocab,
           log_results=decode_hp.log_results,
           skip_eos_postprocess=decode_hp.skip_eos_postprocess)
+      scores_array.append(result['scores'])
       decodes.append(decoded_outputs)
     total_time_per_step += elapsed_time
     total_cnt += result["outputs"].shape[-1]
@@ -364,6 +451,7 @@ def decode_from_file_fn(estimator,
     decode_filename = decoding._add_shard_to_filename(decode_filename, decode_hp)
   tf.logging.info("Writing decodes into %s" % decode_filename)
   outfile = tf.gfile.Open(decode_filename, "w")
+  scorefile = tf.gfile.Open(decode_filename + ".scores", 'w')
   for index in range(len(sorted_inputs)):
     special_chars = ["\a", "\n", "\f", "\r", "\b"]
     output = decodes[sorted_keys[index]]
@@ -371,6 +459,7 @@ def decode_from_file_fn(estimator,
       output = output.replace(c, ' ')
     try:
       outfile.write("%s%s" % (output, decode_hp.delimiter))
+      scorefile.write("%s%s" %  (scores_array[sorted_keys[index]], decode_hp.delimiter))
     except:
       outfile.write("%s" % decode_hp.delimiter)
   outfile.flush()
@@ -398,3 +487,19 @@ def t2t_decoder(problem_name, data_dir,
       estimator, decode_from_file,
       hp, decode_hp, decode_to_file,
       checkpoint_path=checkpoint_path)
+
+
+def t2t_decoder_eval(problem_name, data_dir, 
+                inputs_file, targets_file, loss_to_file,
+                checkpoint_path):
+  hp, decode_hp, estimator = create_hp_and_estimator(
+      problem_name, data_dir, checkpoint_path, loss_to_file)
+  evaluate_from_file_fn(
+      estimator,
+      hp, decode_hp, inputs_file, targets_file, loss_to_file,
+      checkpoint_path=checkpoint_path)
+
+# def t2t_decoder_evaluate(problem_name, data_dir, 
+#                 decode_from_file, decode_to_file,
+#                 checkpoint_path):
+  
