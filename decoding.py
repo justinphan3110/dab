@@ -217,6 +217,78 @@ def decode_interactively(estimator,
     yield decoded_outputs
 
 
+def evaluate_interactively(estimator,
+                        hparams,
+                        decode_hp,
+                        inputs_file,
+                        targets_file,
+                        loss_to_file,
+                        checkpoint_path=None):
+  if not decode_hp.batch_size:
+    decode_hp.batch_size = 32
+    tf.logging.info(
+        "decode_hp.batch_size not specified; default=%d" % decode_hp.batch_size)
+  # Inputs vocabulary is set to targets if there are no inputs in the problem,
+  # e.g., for language models where the inputs are just a prefix of targets.
+  p_hp = hparams.problem_hparams
+  has_input = "inputs" in p_hp.vocabulary
+  inputs_vocab_key = "inputs" if has_input else "targets"
+  inputs_vocab = p_hp.vocabulary[inputs_vocab_key]
+  targets_vocab = p_hp.vocabulary["targets"]
+  problem_name = FLAGS.problem
+
+  tf.logging.info(f"Performing evaluating iteratively for file input_file: {inputs_file} and target_file: {targets_file}")
+  
+  inputs = []
+  targets = []
+
+  for i, t in zip(open(inputs_file), open(targets_file)):
+    inputs.append(i)
+    targets.append(t)
+
+
+  if estimator.config.use_tpu:
+    length = getattr(hparams, "length", 0) or hparams.max_length
+    batch_ids = []
+
+    # Get ids and input function for prediction
+    for line in inputs:
+      if has_input:
+        ids = inputs_vocab.encode(line.strip()) + [1]
+      else:
+        ids = targets_vocab.encode(line)
+      if len(ids) < length:
+        ids.extend([0] * (length - len(ids)))
+      else:
+        ids = ids[:length]
+      batch_ids.append(ids)
+    np_ids = np.array(batch_ids, dtype=np.int32)
+
+    # Get ids of output and function for evaluation
+    batch_output_ids = []
+    for line in targets:
+      if has_input:
+        ids = inputs_vocab.encode(line.strip()) + [1]
+      if len(ids) < length:
+        ids.extend([0] * (length - len(ids)))
+      else:
+        ids = ids[:length]
+      batch_output_ids.append(ids)
+    np_output_ids = np.array(batch_output_ids, dtype=np.int32)
+
+    for np_id, np_output_id in zip(np_ids, np_output_ids):
+      def eval_input_fn(params):
+        print(params)
+        batch_size = 8
+        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": [np_id], "targets": [np_output_id]}))
+        dataset = dataset.map(
+          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
+        dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
+        return dataset
+      loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
+      print(loss)
+
+
 def evaluate_from_file_fn(estimator,
                         hparams,
                         decode_hp,
@@ -236,6 +308,7 @@ def evaluate_from_file_fn(estimator,
   inputs_vocab = p_hp.vocabulary[inputs_vocab_key]
   targets_vocab = p_hp.vocabulary["targets"]
   problem_name = FLAGS.problem
+
   filename = decoding._add_shard_to_filename(inputs_file, decode_hp)
   outfilename = decoding._add_shard_to_filename(targets_file, decode_hp)
 
