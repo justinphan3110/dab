@@ -290,6 +290,7 @@ def evaluate_iteractively(estimator,
       loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
       print(loss)
       loss_array.append(loss)
+      print(loss_array)
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
     tf.logging.info("Writing decodes into %s" % loss_filename)
