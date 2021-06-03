@@ -276,6 +276,11 @@ def evaluate_interactively(estimator,
       batch_output_ids.append(ids)
     np_output_ids = np.array(batch_output_ids, dtype=np.int32)
 
+    tf.debugging.Assert(
+    len(np_ids) == len(np_output_ids),"inputs and targets length not match", summarize=None, name=None
+    )
+
+    loss_array = []
     for np_id, np_output_id in zip(np_ids, np_output_ids):
       def eval_input_fn(params):
         print(params)
@@ -287,6 +292,18 @@ def evaluate_interactively(estimator,
         return dataset
       loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
       print(loss)
+      loss_array.append(loss)
+
+    loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
+    tf.logging.info("Writing decodes into %s" % loss_filename)
+    outfile = tf.gfile.Open(loss_filename, "w")
+
+    for l in loss_array:
+      outfile.write(f'{l}\n')
+      
+    outfile.flush()
+    outfile.close()
+    
 
 
 def evaluate_from_file_fn(estimator,
