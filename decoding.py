@@ -242,7 +242,7 @@ def evaluate_interactively(estimator,
   inputs = []
   targets = []
 
-  for i, t in zip(open(inputs_file), open(targets_file)):
+  for i, t in zip(open(inputs_file, encoding='utf-8'), open(targets_file, encoding='utf-8')):
     inputs.append(i)
     targets.append(t)
 
@@ -296,11 +296,11 @@ def evaluate_interactively(estimator,
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
     tf.logging.info("Writing decodes into %s" % loss_filename)
-    outfile = tf.gfile.Open(loss_filename, "w")
+    outfile = tf.gfile.Open(loss_filename, "w", encoding='utf-8')
 
     for l in loss_array:
       outfile.write(f'{l}\n')
-      
+
     outfile.flush()
     outfile.close()
     
