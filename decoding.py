@@ -277,10 +277,6 @@ def evaluate_iteractively(estimator,
       batch_output_ids.append(ids)
     np_output_ids = np.array(batch_output_ids, dtype=np.int32)
 
-    tf.debugging.Assert(
-    len(np_ids) == len(np_output_ids),"inputs and targets length not match", summarize=None, name=None
-    )
-
     loss_array = []
     for np_id, np_output_id in zip(np_ids, np_output_ids):
       def eval_input_fn(params):
