@@ -438,7 +438,8 @@ def decode_from_file_fn(estimator,
   result_iter = estimator.predict(input_fn, checkpoint_path=checkpoint_path)
 
   for result in result_iter:
-    print(result['logits'])
+    for k,v in result.items():
+      print(k, v)
   # start_time = time.time()
   # total_time_per_step = 0
   # total_cnt = 0
