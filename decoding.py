@@ -39,7 +39,7 @@ def create_hp_and_estimator(
       FLAGS.hparams,
       data_dir=os.path.expanduser(data_dir),
       problem_name=problem_name)
-  # hp.model_dir = checkpoint_path
+  hp.model_dir = checkpoint_path
   hp.output_dir = checkpoint_path
   decode_hp = decoding.decode_hparams(FLAGS.decode_hparams)
   decode_hp.shards = FLAGS.decode_shards
