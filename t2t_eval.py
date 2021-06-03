@@ -34,6 +34,7 @@ def transformer_tall9():
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
   # tf.app.run(t2t_decoder.main)
+  print(FLAGS.output_dir)
   decoding.t2t_decoder_eval(
       FLAGS.problem, 
       FLAGS.data_dir, 

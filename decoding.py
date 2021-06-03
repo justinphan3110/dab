@@ -51,7 +51,7 @@ def create_hp_and_estimator(
 
   FLAGS.checkpoint_path = checkpoint_path
 
-  config = t2t_trainer.create_run_config(hp, checkpoint_path)
+  config = t2t_trainer.create_run_config(hp)
   hp.add_hparam("model_dir", config.model_dir)
   estimator = trainer_lib.create_estimator(
       FLAGS.model,
