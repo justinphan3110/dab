@@ -338,6 +338,7 @@ def evaluate_from_file_fn(estimator,
         ids = ids[:length]
       batch_ids.append(ids)
     np_ids = np.array(batch_ids, dtype=np.int32)
+    print(np_ids.shape)
 
     # Get ids of output and function for evaluation
     batch_output_ids = []
@@ -363,7 +364,7 @@ def evaluate_from_file_fn(estimator,
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
         return dataset
-  loss = estimator.evaluate(eval_input_fn, steps=33, checkpoint_path=checkpoint_path)
+  loss = estimator.evaluate(eval_input_fn, steps=32, checkpoint_path=checkpoint_path)
   print(loss)
 
   
