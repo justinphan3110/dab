@@ -1447,108 +1447,108 @@ class T2TModel(base.Layer):
     Returns:
       TPUEstimatorSpec if use tpu else EstimatorSpec
     """
-    if mode == tf.estimator.ModeKeys.TRAIN:
-      create_dummy_vars()
-    hparams = hparams_lib.copy_hparams(hparams)
+    # if mode == tf.estimator.ModeKeys.TRAIN:
+    #   create_dummy_vars()
+    # hparams = hparams_lib.copy_hparams(hparams)
 
-    # Instantiate model
-    data_parallelism = None
-    if not use_tpu and config:
-      data_parallelism = config.data_parallelism
-    reuse = tf.get_variable_scope().reuse
-    model = cls(
-        hparams,
-        mode,
-        data_parallelism=data_parallelism,
-        decode_hparams=decode_hparams,
-        _reuse=reuse)
+    # # Instantiate model
+    # data_parallelism = None
+    # if not use_tpu and config:
+    #   data_parallelism = config.data_parallelism
+    # reuse = tf.get_variable_scope().reuse
+    # model = cls(
+    #     hparams,
+    #     mode,
+    #     data_parallelism=data_parallelism,
+    #     decode_hparams=decode_hparams,
+    #     _reuse=reuse)
 
-    # PREDICT mode
-    if mode == tf.estimator.ModeKeys.PREDICT:
-      if use_tpu:
-        inputs = features.get("inputs")
-        if inputs is None:
-          inputs = features.get("targets")
-        if inputs is None:
-          inputs = features["infer_targets"]
-        shape = inputs.get_shape().as_list()
-        if shape[0] is None:
-          shape[0] = decode_hparams.batch_size or hparams.batch_size
-        if shape[1] is None:
-          shape[1] = hparams.max_input_seq_length or hparams.max_length
-        inputs.set_shape(shape)
-      return model.estimator_spec_predict(features, use_tpu=use_tpu)
+    # # PREDICT mode
+    # if mode == tf.estimator.ModeKeys.PREDICT:
+    #   if use_tpu:
+    #     inputs = features.get("inputs")
+    #     if inputs is None:
+    #       inputs = features.get("targets")
+    #     if inputs is None:
+    #       inputs = features["infer_targets"]
+    #     shape = inputs.get_shape().as_list()
+    #     if shape[0] is None:
+    #       shape[0] = decode_hparams.batch_size or hparams.batch_size
+    #     if shape[1] is None:
+    #       shape[1] = hparams.max_input_seq_length or hparams.max_length
+    #     inputs.set_shape(shape)
+    #   return model.estimator_spec_predict(features, use_tpu=use_tpu)
 
-    # TRAIN and EVAL modes
-    if hparams.eval_run_autoregressive and mode == tf.estimator.ModeKeys.EVAL:
-      logits, losses_dict = model.eval_autoregressive(features)
-      print('hello world')
-      print('logits', logits)
-    else:
-      logits, losses_dict = model(features)  # pylint: disable=not-callable
+    # # TRAIN and EVAL modes
+    # if hparams.eval_run_autoregressive and mode == tf.estimator.ModeKeys.EVAL:
+    #   logits, losses_dict = model.eval_autoregressive(features)
+    #   print('hello world')
+    #   print('logits', logits)
+    # else:
+    #   logits, losses_dict = model(features)  # pylint: disable=not-callable
 
-    # Support model-generated labels by overriding features["targets"] with
-    # logits["self_generated_targets"].
-    if isinstance(logits, dict) and "self_generated_targets" in logits:
-      # Overwrite 'features["targets"]' and 'labels'
-      # by logits["self_generated_targets"].
-      tf.logging.info("Replacing targets with model-provided targets.")
-      features["targets"] = labels = logits.pop("self_generated_targets")
-      assert list(logits.keys()) == ["logits"], (
-          # See "Returns" in the "top" method docstring for the expected
-          # "logits" format when targets are generated at training time.
-          "Expect only key 'logits' when there is 'self_generated_targets'. "
-          "Found {}".format(logits.keys())
-      )
-      # Recover the original logits tensor from the logits dict.
-      logits = logits["logits"]  # Can be a tf.Tensor or a dict.
+    # # Support model-generated labels by overriding features["targets"] with
+    # # logits["self_generated_targets"].
+    # if isinstance(logits, dict) and "self_generated_targets" in logits:
+    #   # Overwrite 'features["targets"]' and 'labels'
+    #   # by logits["self_generated_targets"].
+    #   tf.logging.info("Replacing targets with model-provided targets.")
+    #   features["targets"] = labels = logits.pop("self_generated_targets")
+    #   assert list(logits.keys()) == ["logits"], (
+    #       # See "Returns" in the "top" method docstring for the expected
+    #       # "logits" format when targets are generated at training time.
+    #       "Expect only key 'logits' when there is 'self_generated_targets'. "
+    #       "Found {}".format(logits.keys())
+    #   )
+    #   # Recover the original logits tensor from the logits dict.
+    #   logits = logits["logits"]  # Can be a tf.Tensor or a dict.
 
-    # Set known shapes
-    if common_layers.is_xla_compiled():
-      if isinstance(logits, dict):
-        for k, v in sorted(six.iteritems(logits)):
-          if "scalar/" in k:
-            continue
+    # # Set known shapes
+    # if common_layers.is_xla_compiled():
+    #   if isinstance(logits, dict):
+    #     for k, v in sorted(six.iteritems(logits)):
+    #       if "scalar/" in k:
+    #         continue
 
-          shape = v.get_shape().as_list()
-          if shape[0] is None:
-            shape[0] = params["batch_size"]
-          if shape[1] is None:
-            shape[1] = hparams.max_length
-          v.set_shape(shape)
-      else:
-        shape = logits.get_shape().as_list()
-        if shape[0] is None:
-          shape[0] = params["batch_size"]
-        if shape[1] is None:
-          shape[1] = hparams.max_length
-        logits.set_shape(shape)
+    #       shape = v.get_shape().as_list()
+    #       if shape[0] is None:
+    #         shape[0] = params["batch_size"]
+    #       if shape[1] is None:
+    #         shape[1] = hparams.max_length
+    #       v.set_shape(shape)
+    #   else:
+    #     shape = logits.get_shape().as_list()
+    #     if shape[0] is None:
+    #       shape[0] = params["batch_size"]
+    #     if shape[1] is None:
+    #       shape[1] = hparams.max_length
+    #     logits.set_shape(shape)
 
-    assert "training" in losses_dict
+    # assert "training" in losses_dict
 
-    # Attack mode
-    if mode == "attack":
-      return logits
+    # # Attack mode
+    # if mode == "attack":
+    #   return logits
 
-    # Summarize losses
-    model._summarize_losses(losses_dict)  # pylint: disable=protected-access
+    # # Summarize losses
+    # model._summarize_losses(losses_dict)  # pylint: disable=protected-access
 
-    # Accumulate losses
-    loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
+    # # Accumulate losses
+    # loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
 
-    # EVAL mode
-    if mode == tf.estimator.ModeKeys.EVAL:
-      # return model.estimator_spec_eval(features, logits, labels, loss,
-      #                                  losses_dict)
-      return  {'nah': logits}
+    # # EVAL mode
+    # if mode == tf.estimator.ModeKeys.EVAL:
+    #   return model.estimator_spec_eval(features, logits, labels, loss,
+    #                                    losses_dict)
+    #   # return  {'nah': logits}
 
-    # TRAIN mode
-    assert mode == tf.estimator.ModeKeys.TRAIN
-    num_async_replicas = 1
-    if config and not use_tpu:
-      num_async_replicas = config.t2t_device_info["num_async_replicas"]
-    return model.estimator_spec_train(
-        loss, num_async_replicas=num_async_replicas, use_tpu=use_tpu)
+    # # TRAIN mode
+    # assert mode == tf.estimator.ModeKeys.TRAIN
+    # num_async_replicas = 1
+    # if config and not use_tpu:
+    #   num_async_replicas = config.t2t_device_info["num_async_replicas"]
+    # return model.estimator_spec_train(
+    #     loss, num_async_replicas=num_async_replicas, use_tpu=use_tpu)
 
   def initialize_from_ckpt(self, ckpt_dir):
     return initialize_from_ckpt(ckpt_dir=ckpt_dir, hparams=self._hparams)
