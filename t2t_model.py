@@ -1407,7 +1407,7 @@ class T2TModel(base.Layer):
                               hparams,
                               decode_hparams=None,
                               use_tpu=False):
-    model_cls = registry.model(model_name)
+    model_cls = registry.models(model_name)
 
     def wrapping_model_fn(features, labels, mode, params=None, config=None):
       return model_cls.estimator_model_fn(
@@ -1606,7 +1606,7 @@ class T2TModel(base.Layer):
     del losses_dict
     hparams = self.hparams
 
-    if True:
+    if not hasattr(hparams, "problem"):
       raise NotImplementedError(_no_problem_err("estimator_spec_eval"))
 
     problem = hparams.problem
