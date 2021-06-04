@@ -321,6 +321,7 @@ def evaluate_from_file_fn(estimator,
 
   if estimator.config.use_tpu:
     length = getattr(hparams, "length", 0) or hparams.max_length
+    length = 256
     batch_ids = []
 
     # Get ids and input function for prediction
