@@ -21,7 +21,7 @@ from tqdm import tqdm
 from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
 from tensor2tensor.utils import decoding
-from tensor2tensor.utils import trainer_lib
+import trainer_lib
 from tensor2tensor.utils import usr_dir
 
 import tensorflow as tf
