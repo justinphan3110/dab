@@ -1481,7 +1481,7 @@ class T2TModel(base.Layer):
 
     # TRAIN and EVAL modes
     if hparams.eval_run_autoregressive and mode == tf.estimator.ModeKeys.EVAL:
-      logits, losses_dict = model.eval_autoregressive(features)
+      # logits, losses_dict = model.eval_autoregressive(features)
       print('hello world')
       print('logits', logits)
     else:
