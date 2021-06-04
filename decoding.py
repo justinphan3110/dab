@@ -272,7 +272,7 @@ def evaluate_interactively(estimator,
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
         return dataset
-      loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
+      loss = estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)['loss']
       loss_array.append(loss)
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
