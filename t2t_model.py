@@ -1407,7 +1407,7 @@ class T2TModel(base.Layer):
                               hparams,
                               decode_hparams=None,
                               use_tpu=False):
-    model_cls = registry.models(model_name)
+    model_cls = registry.model(model_name)
 
     def wrapping_model_fn(features, labels, mode, params=None, config=None):
       return model_cls.estimator_model_fn(
@@ -1447,159 +1447,159 @@ class T2TModel(base.Layer):
     Returns:
       TPUEstimatorSpec if use tpu else EstimatorSpec
     """
-    if mode == tf.estimator.ModeKeys.TRAIN:
-      create_dummy_vars()
-    hparams = hparams_lib.copy_hparams(hparams)
+  #   if mode == tf.estimator.ModeKeys.TRAIN:
+  #     create_dummy_vars()
+  #   hparams = hparams_lib.copy_hparams(hparams)
 
-    # Instantiate model
-    data_parallelism = None
-    if not use_tpu and config:
-      data_parallelism = config.data_parallelism
-    reuse = tf.get_variable_scope().reuse
-    model = cls(
-        hparams,
-        mode,
-        data_parallelism=data_parallelism,
-        decode_hparams=decode_hparams,
-        _reuse=reuse)
+  #   # Instantiate model
+  #   data_parallelism = None
+  #   if not use_tpu and config:
+  #     data_parallelism = config.data_parallelism
+  #   reuse = tf.get_variable_scope().reuse
+  #   model = cls(
+  #       hparams,
+  #       mode,
+  #       data_parallelism=data_parallelism,
+  #       decode_hparams=decode_hparams,
+  #       _reuse=reuse)
 
-    # PREDICT mode
-    if mode == tf.estimator.ModeKeys.PREDICT:
-      if use_tpu:
-        inputs = features.get("inputs")
-        if inputs is None:
-          inputs = features.get("targets")
-        if inputs is None:
-          inputs = features["infer_targets"]
-        shape = inputs.get_shape().as_list()
-        if shape[0] is None:
-          shape[0] = decode_hparams.batch_size or hparams.batch_size
-        if shape[1] is None:
-          shape[1] = hparams.max_input_seq_length or hparams.max_length
-        inputs.set_shape(shape)
-      return model.estimator_spec_predict(features, use_tpu=use_tpu)
+  #   # PREDICT mode
+  #   if mode == tf.estimator.ModeKeys.PREDICT:
+  #     if use_tpu:
+  #       inputs = features.get("inputs")
+  #       if inputs is None:
+  #         inputs = features.get("targets")
+  #       if inputs is None:
+  #         inputs = features["infer_targets"]
+  #       shape = inputs.get_shape().as_list()
+  #       if shape[0] is None:
+  #         shape[0] = decode_hparams.batch_size or hparams.batch_size
+  #       if shape[1] is None:
+  #         shape[1] = hparams.max_input_seq_length or hparams.max_length
+  #       inputs.set_shape(shape)
+  #     return model.estimator_spec_predict(features, use_tpu=use_tpu)
 
-    # TRAIN and EVAL modes
-    if hparams.eval_run_autoregressive and mode == tf.estimator.ModeKeys.EVAL:
-      logits, losses_dict = model.eval_autoregressive(features)
-      print('hello world')
-      print('logits', logits)
-    else:
-      logits, losses_dict = model(features)  # pylint: disable=not-callable
+  #   # TRAIN and EVAL modes
+  #   if hparams.eval_run_autoregressive and mode == tf.estimator.ModeKeys.EVAL:
+  #     logits, losses_dict = model.eval_autoregressive(features)
+  #     print('hello world')
+  #     print('logits', logits)
+  #   else:
+  #     logits, losses_dict = model(features)  # pylint: disable=not-callable
 
-    # Support model-generated labels by overriding features["targets"] with
-    # logits["self_generated_targets"].
-    if isinstance(logits, dict) and "self_generated_targets" in logits:
-      # Overwrite 'features["targets"]' and 'labels'
-      # by logits["self_generated_targets"].
-      tf.logging.info("Replacing targets with model-provided targets.")
-      features["targets"] = labels = logits.pop("self_generated_targets")
-      assert list(logits.keys()) == ["logits"], (
-          # See "Returns" in the "top" method docstring for the expected
-          # "logits" format when targets are generated at training time.
-          "Expect only key 'logits' when there is 'self_generated_targets'. "
-          "Found {}".format(logits.keys())
-      )
-      # Recover the original logits tensor from the logits dict.
-      logits = logits["logits"]  # Can be a tf.Tensor or a dict.
+  #   # Support model-generated labels by overriding features["targets"] with
+  #   # logits["self_generated_targets"].
+  #   if isinstance(logits, dict) and "self_generated_targets" in logits:
+  #     # Overwrite 'features["targets"]' and 'labels'
+  #     # by logits["self_generated_targets"].
+  #     tf.logging.info("Replacing targets with model-provided targets.")
+  #     features["targets"] = labels = logits.pop("self_generated_targets")
+  #     assert list(logits.keys()) == ["logits"], (
+  #         # See "Returns" in the "top" method docstring for the expected
+  #         # "logits" format when targets are generated at training time.
+  #         "Expect only key 'logits' when there is 'self_generated_targets'. "
+  #         "Found {}".format(logits.keys())
+  #     )
+  #     # Recover the original logits tensor from the logits dict.
+  #     logits = logits["logits"]  # Can be a tf.Tensor or a dict.
 
-    # Set known shapes
-    if common_layers.is_xla_compiled():
-      if isinstance(logits, dict):
-        for k, v in sorted(six.iteritems(logits)):
-          if "scalar/" in k:
-            continue
+  #   # Set known shapes
+  #   if common_layers.is_xla_compiled():
+  #     if isinstance(logits, dict):
+  #       for k, v in sorted(six.iteritems(logits)):
+  #         if "scalar/" in k:
+  #           continue
 
-          shape = v.get_shape().as_list()
-          if shape[0] is None:
-            shape[0] = params["batch_size"]
-          if shape[1] is None:
-            shape[1] = hparams.max_length
-          v.set_shape(shape)
-      else:
-        shape = logits.get_shape().as_list()
-        if shape[0] is None:
-          shape[0] = params["batch_size"]
-        if shape[1] is None:
-          shape[1] = hparams.max_length
-        logits.set_shape(shape)
+  #         shape = v.get_shape().as_list()
+  #         if shape[0] is None:
+  #           shape[0] = params["batch_size"]
+  #         if shape[1] is None:
+  #           shape[1] = hparams.max_length
+  #         v.set_shape(shape)
+  #     else:
+  #       shape = logits.get_shape().as_list()
+  #       if shape[0] is None:
+  #         shape[0] = params["batch_size"]
+  #       if shape[1] is None:
+  #         shape[1] = hparams.max_length
+  #       logits.set_shape(shape)
 
-    assert "training" in losses_dict
+  #   assert "training" in losses_dict
 
-    # Attack mode
-    if mode == "attack":
-      return logits
+  #   # Attack mode
+  #   if mode == "attack":
+  #     return logits
 
-    # Summarize losses
-    model._summarize_losses(losses_dict)  # pylint: disable=protected-access
+  #   # Summarize losses
+  #   model._summarize_losses(losses_dict)  # pylint: disable=protected-access
 
-    # Accumulate losses
-    loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
+  #   # Accumulate losses
+  #   loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
 
-    # EVAL mode
-    if mode == tf.estimator.ModeKeys.EVAL:
-      return model.estimator_spec_eval(features, logits, labels, loss,
-                                       losses_dict)
-      # return  {'nah': logits}
+  #   # EVAL mode
+  #   if mode == tf.estimator.ModeKeys.EVAL:
+  #     return model.estimator_spec_eval(features, logits, labels, loss,
+  #                                      losses_dict)
+  #     # return  {'nah': logits}
 
-    # TRAIN mode
-    assert mode == tf.estimator.ModeKeys.TRAIN
-    num_async_replicas = 1
-    if config and not use_tpu:
-      num_async_replicas = config.t2t_device_info["num_async_replicas"]
-    return model.estimator_spec_train(
-        loss, num_async_replicas=num_async_replicas, use_tpu=use_tpu)
+  #   # TRAIN mode
+  #   assert mode == tf.estimator.ModeKeys.TRAIN
+  #   num_async_replicas = 1
+  #   if config and not use_tpu:
+  #     num_async_replicas = config.t2t_device_info["num_async_replicas"]
+  #   return model.estimator_spec_train(
+  #       loss, num_async_replicas=num_async_replicas, use_tpu=use_tpu)
 
-  def initialize_from_ckpt(self, ckpt_dir):
-    return initialize_from_ckpt(ckpt_dir=ckpt_dir, hparams=self._hparams)
+  # def initialize_from_ckpt(self, ckpt_dir):
+  #   return initialize_from_ckpt(ckpt_dir=ckpt_dir, hparams=self._hparams)
 
-  def create_train_host_call(self):
-    return create_host_call(self.hparams.model_dir)
+  # def create_train_host_call(self):
+  #   return create_host_call(self.hparams.model_dir)
 
-  def create_eval_host_call(self):
-    eval_dir = os.path.join(
-        self.hparams.model_dir,
-        self.hparams.get("eval_dir_name", "eval"))
-    return create_host_call(eval_dir)
+  # def create_eval_host_call(self):
+  #   eval_dir = os.path.join(
+  #       self.hparams.model_dir,
+  #       self.hparams.get("eval_dir_name", "eval"))
+  #   return create_host_call(eval_dir)
 
-  def estimator_spec_train(self, loss, num_async_replicas=1, use_tpu=False):
-    """Constructs `tf.estimator.EstimatorSpec` for TRAIN (training) mode."""
-    train_op = self.optimize(loss, num_async_replicas=num_async_replicas,
-                             use_tpu=use_tpu)
+  # def estimator_spec_train(self, loss, num_async_replicas=1, use_tpu=False):
+  #   """Constructs `tf.estimator.EstimatorSpec` for TRAIN (training) mode."""
+  #   train_op = self.optimize(loss, num_async_replicas=num_async_replicas,
+  #                            use_tpu=use_tpu)
 
-    if use_tpu:
-      if self._hparams.warm_start_from:
-        def scaffold_fn():
-          self.initialize_from_ckpt(self._hparams.warm_start_from)
-          return tf.train.Scaffold()
-      else:
-        scaffold_fn = None
+  #   if use_tpu:
+  #     if self._hparams.warm_start_from:
+  #       def scaffold_fn():
+  #         self.initialize_from_ckpt(self._hparams.warm_start_from)
+  #         return tf.train.Scaffold()
+  #     else:
+  #       scaffold_fn = None
 
-      # Note: important to call this before remove_summaries()
-      if self.hparams.tpu_enable_host_call:
-        host_call = self.create_train_host_call()
-      else:
-        host_call = None
+  #     # Note: important to call this before remove_summaries()
+  #     if self.hparams.tpu_enable_host_call:
+  #       host_call = self.create_train_host_call()
+  #     else:
+  #       host_call = None
 
-      remove_summaries()
+  #     remove_summaries()
 
-      return contrib.tpu().TPUEstimatorSpec(
-          tf.estimator.ModeKeys.TRAIN,
-          loss=loss,
-          train_op=train_op,
-          host_call=host_call,
-          scaffold_fn=scaffold_fn)
-    else:
-      if self._hparams.warm_start_from:
-        self.initialize_from_ckpt(self._hparams.warm_start_from)
+  #     return contrib.tpu().TPUEstimatorSpec(
+  #         tf.estimator.ModeKeys.TRAIN,
+  #         loss=loss,
+  #         train_op=train_op,
+  #         host_call=host_call,
+  #         scaffold_fn=scaffold_fn)
+  #   else:
+  #     if self._hparams.warm_start_from:
+  #       self.initialize_from_ckpt(self._hparams.warm_start_from)
 
-      # When loading weights from a pre-trained model, you want to be able to
-      # load separate weights into the encoder and decoder.
-      if self._hparams.warm_start_from_second:
-        self.initialize_from_ckpt(self._hparams.warm_start_from_second)
+  #     # When loading weights from a pre-trained model, you want to be able to
+  #     # load separate weights into the encoder and decoder.
+  #     if self._hparams.warm_start_from_second:
+  #       self.initialize_from_ckpt(self._hparams.warm_start_from_second)
 
-      return tf.estimator.EstimatorSpec(
-          tf.estimator.ModeKeys.TRAIN, loss=loss, train_op=train_op)
+  #     return tf.estimator.EstimatorSpec(
+  #         tf.estimator.ModeKeys.TRAIN, loss=loss, train_op=train_op)
 
   def estimator_spec_eval(self, features, logits, labels, loss, losses_dict):
     """Constructs `tf.estimator.EstimatorSpec` for EVAL (evaluation) mode."""
