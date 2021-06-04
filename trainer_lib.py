@@ -537,7 +537,7 @@ class T2TExperiment(object):
   def evaluate(self):
     name = "eval"
     self._set_eval_dir_name("eval")
-    return self._estimator.evaluate(
+    return self._estimator.evaluated(
         self._eval_spec.input_fn,
         steps=self._eval_spec.steps,
         hooks=self._eval_spec.hooks,
