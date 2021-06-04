@@ -294,7 +294,7 @@ def evaluate_from_file_fn(estimator,
                         targets_file,
                         loss_to_file,
                         checkpoint_path=None):
-  decode_hp.batch_size = 10
+  # decode_hp.batch_size = 10
   if not decode_hp.batch_size:
     decode_hp.batch_size = 32
     tf.logging.info(
@@ -363,7 +363,7 @@ def evaluate_from_file_fn(estimator,
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
         return dataset
-  loss = estimator.evaluate(eval_input_fn, steps=100000000, checkpoint_path=checkpoint_path)
+  loss = estimator.evaluate(eval_input_fn, steps=100, checkpoint_path=checkpoint_path)
   print(loss)
 
   
