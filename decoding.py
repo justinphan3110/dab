@@ -439,7 +439,7 @@ def decode_from_file_fn(estimator,
 
   for result in result_iter:
     for k,v in result.items():
-      print(k)
+      print(k, v)
   # start_time = time.time()
   # total_time_per_step = 0
   # total_cnt = 0
