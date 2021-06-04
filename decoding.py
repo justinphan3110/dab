@@ -356,7 +356,6 @@ def evaluate_from_file_fn(estimator,
         dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np_ids, "targets": np_output_ids}))
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
-        dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
         return dataset
   loss = estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)['loss']
   print(loss)
