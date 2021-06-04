@@ -294,6 +294,7 @@ def evaluate_from_file_fn(estimator,
                         targets_file,
                         loss_to_file,
                         checkpoint_path=None):
+  decode_hp.batch_size = 1
   if not decode_hp.batch_size:
     decode_hp.batch_size = 32
     tf.logging.info(
