@@ -268,10 +268,8 @@ def evaluate_interactively(estimator,
     for np_id, np_output_id in tqdm(zip(np_ids, np_output_ids)):
       def eval_input_fn(params):
         batch_size = params["batch_size"]
-        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np.array(np_id, dtype=np.int32), "targets": np.array(np_output_id, dtype=np.int32)}))
-        dataset = dataset.map(
-          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
-
+        dataset = tf.data.Dataset.from_tensor_slices({"inputs": tf.reshape(np_id, (length, 1, 1)), 
+          "targets": tf.reshape(np_output_id, (length, 1, 1))}, tf.reshape(np_output_id, (length, 1, 1)))
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
 
