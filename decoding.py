@@ -26,6 +26,8 @@ from tensor2tensor.utils import usr_dir
 
 import tensorflow as tf
 import lib
+import copy 
+
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -54,13 +56,89 @@ def create_hp_and_estimator(
 
   config = t2t_trainer.create_run_config(hp)
   hp.add_hparam("model_dir", config.model_dir)
-  estimator = trainer_lib.create_estimator(
+  estimator = create_estimator(
       FLAGS.model,
       hp,
       config,
       decode_hparams=decode_hp,
       use_tpu=FLAGS.use_tpu)
   return hp, decode_hp, estimator
+
+def create_estimator(model_name, hparams, init_checkpoint):
+  """Create a T2T Estimator."""
+  model_fn = get_model_fn(model_name, hparams, init_checkpoint)
+  run_config = t2t_decoder.t2t_trainer.create_run_config(hparams)
+  if FLAGS.use_tpu:
+    estimator = tf.contrib.tpu.TPUEstimator(
+        model_fn=model_fn,
+        model_dir=run_config.model_dir,
+        config=run_config,
+        use_tpu=FLAGS.use_tpu,
+        train_batch_size=1,
+        eval_batch_size=1,
+        predict_batch_size=1
+    )
+  else:
+    estimator = tf.estimator.Estimator(
+        model_fn=model_fn,
+        model_dir=run_config.model_dir,
+        config=run_config,
+    )
+
+  return estimator
+
+
+def get_model_fn(model_name, hparams, init_checkpoint):
+  """Get model fn."""
+  model_cls = t2t_decoder.registry.model(model_name)
+
+  def model_fn(features, labels, mode, params=None, config=None):
+    """Model fn."""
+    _, _ = params, labels
+    hparams_ = copy.deepcopy(hparams)
+
+    # Instantiate model
+    data_parallelism = None
+    if not FLAGS.use_tpu and config:
+      data_parallelism = config.data_parallelism
+    reuse = tf.get_variable_scope().reuse
+    model = model_cls(
+        hparams_,
+        # Always build model with EVAL mode to turn off all dropouts.
+        tf.estimator.ModeKeys.EVAL,
+        data_parallelism=data_parallelism,
+        decode_hparams=None,
+        _reuse=reuse)
+
+    logits, _ = model(features)
+
+    scaffold_fn = (model.get_scaffold_fn(init_checkpoint)
+                   if FLAGS.load_checkpoint else None)
+
+    if mode == tf.estimator.ModeKeys.TRAIN:
+      # Dummy spec, only for caching checkpoint purpose
+      return tf.estimator.EstimatorSpec(
+          mode=mode,
+          loss=tf.constant(0.0),
+          train_op=tf.no_op())
+
+    if FLAGS.use_tpu:
+      predict_spec = tf.contrib.tpu.TPUEstimatorSpec(
+          mode=mode,
+          predictions=logits,
+          scaffold_fn=scaffold_fn)
+    else:
+      scaffold_fn()
+      predict_spec = tf.estimator.EstimatorSpec(
+          mode=mode,
+          predictions=logits)
+    return predict_spec
+
+  return model_fn
+
+
+
+
 
 
 def backtranslate_interactively(
@@ -268,7 +346,7 @@ def evaluate_interactively(estimator,
     for np_id, np_output_id in tqdm(zip(np_ids, np_output_ids)):
       def eval_input_fn(params):
         batch_size = params["batch_size"]
-        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np.array(np_id, dtype=np.int32), "targets": np.array(np_output_id, dtype=np.int32)}))
+        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np.array([np_id], dtype=np.int32), "targets": np.array([np_output_id], dtype=np.int32)}))
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
