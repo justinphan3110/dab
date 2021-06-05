@@ -362,6 +362,7 @@ def evaluate_from_file_fn(estimator,
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
+        dataset = tf.data.Dataset.batch(params['batch_size'], drop_remainder=True)
         return dataset
   loss = estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
   print(loss)
