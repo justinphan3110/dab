@@ -59,9 +59,7 @@ def create_hp_and_estimator(
   estimator = create_estimator(
       FLAGS.model,
       hp,
-      config,
-      decode_hparams=decode_hp,
-      use_tpu=FLAGS.use_tpu)
+      config)
   return hp, decode_hp, estimator
 
 def create_estimator(model_name, hparams, init_checkpoint):
