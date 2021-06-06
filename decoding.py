@@ -89,7 +89,7 @@ def create_estimator(model_name, hparams, init_checkpoint):
 def get_model_fn(model_name, hparams, init_checkpoint):
   """Get model fn."""
   model_cls = registry.model(model_name)
-
+  hparams.batch_size = 32
   def model_fn(features, labels, mode, params=None, config=None):
     """Model fn."""
     _, _ = params, labels
