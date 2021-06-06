@@ -94,7 +94,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     """Model fn."""
     _, _ = params, labels
     hparams_ = copy.deepcopy(hparams)
-
+    print("hparams_ ", hparams)
     # Instantiate model
     data_parallelism = None
     if not FLAGS.use_tpu and config:
