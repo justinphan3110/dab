@@ -22,12 +22,10 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
-from tensor2tensor.utils import usr_dir, registry
-
+from tensor2tensor.utils import usr_dir
+import copy
 import tensorflow as tf
 import lib
-import copy 
-
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -59,13 +57,15 @@ def create_hp_and_estimator(
   estimator = trainer_lib.create_estimator(
       FLAGS.model,
       hp,
-      config)
+      config,
+      decode_hparams=decode_hp,
+      use_tpu=FLAGS.use_tpu)
   return hp, decode_hp, estimator
 
 def create_estimator(model_name, hparams, init_checkpoint):
   """Create a T2T Estimator."""
   model_fn = get_model_fn(model_name, hparams, init_checkpoint)
-  run_config = t2t_trainer.create_run_config(hparams)
+  run_config = t2t_decoder.t2t_trainer.create_run_config(hparams)
   if FLAGS.use_tpu:
     estimator = tf.contrib.tpu.TPUEstimator(
         model_fn=model_fn,
@@ -88,19 +88,19 @@ def create_estimator(model_name, hparams, init_checkpoint):
 
 def get_model_fn(model_name, hparams, init_checkpoint):
   """Get model fn."""
-  model_cls = registry.model(model_name)
-  hparams.batch_size = 32
+  model_cls = t2t_decoder.registry.model(model_name)
+
   def model_fn(features, labels, mode, params=None, config=None):
     """Model fn."""
     _, _ = params, labels
     hparams_ = copy.deepcopy(hparams)
-    print("hparams_ ", hparams)
+
     # Instantiate model
     data_parallelism = None
     if not FLAGS.use_tpu and config:
       data_parallelism = config.data_parallelism
     reuse = tf.get_variable_scope().reuse
-    model = model_cls(
+    this_model = model_cls(
         hparams_,
         # Always build model with EVAL mode to turn off all dropouts.
         tf.estimator.ModeKeys.EVAL,
@@ -108,7 +108,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
         decode_hparams=None,
         _reuse=reuse)
 
-    logits, _ = model(features)
+    logits, _ = this_model(features)
 
     scaffold_fn = (model.get_scaffold_fn(init_checkpoint)
                    if FLAGS.load_checkpoint else None)
@@ -442,9 +442,12 @@ def evaluate_from_file_fn(estimator,
         dataset = dataset.map(
           lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
-        # dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
+        dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
-  estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
+  try:
+     estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
+  except:
+      print("next")
   # print(loss)
 
   
@@ -656,7 +659,7 @@ def t2t_decoder_eval(problem_name, data_dir,
                 checkpoint_path):
   hp, decode_hp, estimator = create_hp_and_estimator(
       problem_name, data_dir, checkpoint_path, loss_to_file)
-  evaluate_from_file_fn(
+  evaluate_interactively(
       estimator,
       hp, decode_hp, inputs_file, targets_file, loss_to_file,
       checkpoint_path=checkpoint_path)
