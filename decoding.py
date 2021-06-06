@@ -22,7 +22,7 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
-from tensor2tensor.utils import usr_dir
+from tensor2tensor.utils import usr_dir, registry
 import copy
 import tensorflow as tf
 import lib
@@ -57,15 +57,13 @@ def create_hp_and_estimator(
   estimator = trainer_lib.create_estimator(
       FLAGS.model,
       hp,
-      config,
-      decode_hparams=decode_hp,
-      use_tpu=FLAGS.use_tpu)
+      checkpoint_path)
   return hp, decode_hp, estimator
 
 def create_estimator(model_name, hparams, init_checkpoint):
   """Create a T2T Estimator."""
   model_fn = get_model_fn(model_name, hparams, init_checkpoint)
-  run_config = t2t_decoder.t2t_trainer.create_run_config(hparams)
+  run_config = t2t_trainer.create_run_config(hparams)
   if FLAGS.use_tpu:
     estimator = tf.contrib.tpu.TPUEstimator(
         model_fn=model_fn,
@@ -88,7 +86,7 @@ def create_estimator(model_name, hparams, init_checkpoint):
 
 def get_model_fn(model_name, hparams, init_checkpoint):
   """Get model fn."""
-  model_cls = t2t_decoder.registry.model(model_name)
+  model_cls = registry.model(model_name)
 
   def model_fn(features, labels, mode, params=None, config=None):
     """Model fn."""
@@ -110,7 +108,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
 
     logits, _ = this_model(features)
 
-    scaffold_fn = (model.get_scaffold_fn(init_checkpoint)
+    scaffold_fn = (this_model.get_scaffold_fn(init_checkpoint)
                    if FLAGS.load_checkpoint else None)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
