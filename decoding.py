@@ -348,10 +348,7 @@ def evaluate_interactively(estimator,
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
 
-      try:
-        estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
-      except:
-        continue
+      estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
     tf.logging.info("Writing decodes into %s" % loss_filename)
