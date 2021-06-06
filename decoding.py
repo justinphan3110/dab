@@ -54,7 +54,7 @@ def create_hp_and_estimator(
 
   config = t2t_trainer.create_run_config(hp)
   hp.add_hparam("model_dir", config.model_dir)
-  estimator = trainer_lib.create_estimator(
+  estimator = create_estimator(
       FLAGS.model,
       hp,
       checkpoint_path)
@@ -71,7 +71,7 @@ def create_estimator(model_name, hparams, init_checkpoint):
         config=run_config,
         use_tpu=FLAGS.use_tpu,
         train_batch_size=1,
-        eval_batch_size=1,
+        eval_batch_size=32,
         predict_batch_size=1
     )
   else:
