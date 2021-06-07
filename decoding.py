@@ -120,7 +120,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
           loss=tf.constant(0.0),
           train_op=tf.no_op())
 
-    if FLAGS.use_tpu:
+    if False:
       predict_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=loss,
