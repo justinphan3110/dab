@@ -125,6 +125,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
           mode=mode,
           loss=loss,
           predictions=logits,
+          save_summary_steps=None,
           scaffold_fn=scaffold_fn)
     else:
       scaffold_fn()
