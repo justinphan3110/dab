@@ -440,12 +440,12 @@ def evaluate_from_file_fn(estimator,
         # dataset = dataset.map(
         #   lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
-        # dataset = dataset.map(
-        #   lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
-
-
         dataset = dataset.map(
-          lambda ex: ({"features": tf.reshape(ex["inputs"], (length, 1, 1)), "labels": tf.reshape(ex["targets"], (length, 1, 1))}))
+          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
+
+
+        # dataset = dataset.map(
+        #   lambda ex: ({"features": tf.reshape(ex["inputs"], (length, 1, 1)), "labels": tf.reshape(ex["targets"], (length, 1, 1))}))
 
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
