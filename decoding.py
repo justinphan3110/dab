@@ -111,7 +111,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     # Accumulate losses
     loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
     
-    scaffold_fn = this_model.get_scaffold_fn(init_checkpoint)
+    scaffold_fn = None
 
 
     print('logits ', logits)
