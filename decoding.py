@@ -120,17 +120,16 @@ def get_model_fn(model_name, hparams, init_checkpoint):
           loss=tf.constant(0.0),
           train_op=tf.no_op())
 
-    if False:
+    if FLAGS.use_tpu:
       predict_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=loss,
           predictions=logits,
           scaffold_fn=scaffold_fn)
     else:
-      # scaffold_fn()
+      scaffold_fn()
       predict_spec = tf.estimator.EstimatorSpec(
           mode=mode,
-          loss=loss,
           predictions=logits)
     return predict_spec
 
