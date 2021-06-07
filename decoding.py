@@ -127,7 +127,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
           predictions=logits,
           scaffold_fn=scaffold_fn)
     else:
-      scaffold_fn()
+      # scaffold_fn()
       predict_spec = tf.estimator.EstimatorSpec(
           mode=mode,
           predictions=logits)
