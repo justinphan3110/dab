@@ -111,7 +111,8 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     # Accumulate losses
     loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
     
-    scaffold_fn = None
+    scaffold_fn = (this_model.get_scaffold_fn(init_checkpoint)
+                   if FLAGS.load_checkpoint else None)
 
     print('logits ', logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -352,7 +353,7 @@ def evaluate_interactively(estimator,
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
 
-      estimator.evaluate(eval_input_fn, steps=10, checkpoint_path=checkpoint_path)
+      estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
 
     loss_filename = decoding._add_shard_to_filename(loss_to_file, decode_hp)
     tf.logging.info("Writing decodes into %s" % loss_filename)
