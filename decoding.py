@@ -70,9 +70,9 @@ def create_estimator(model_name, hparams, init_checkpoint):
         model_dir=run_config.model_dir,
         config=run_config,
         use_tpu=FLAGS.use_tpu,
-        train_batch_size=1,
+        train_batch_size=32,
         eval_batch_size=32,
-        predict_batch_size=1
+        predict_batch_size=32
     )
   else:
     estimator = tf.estimator.Estimator(
@@ -106,6 +106,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
         decode_hparams=None,
         _reuse=reuse)
 
+    print("features ", features)
     logits, losses_dict = this_model(features)
 
     # Accumulate losses
