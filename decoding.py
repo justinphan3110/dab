@@ -130,6 +130,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
       # scaffold_fn()
       predict_spec = tf.estimator.EstimatorSpec(
           mode=mode,
+          loss=loss,
           predictions=logits)
     return predict_spec
 
