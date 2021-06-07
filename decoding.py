@@ -106,8 +106,11 @@ def get_model_fn(model_name, hparams, init_checkpoint):
         decode_hparams=None,
         _reuse=reuse)
 
-    logits, _ = this_model(features)
+    logits, losses_dict = this_model(features)
 
+    # Accumulate losses
+    loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
+    
     scaffold_fn = None
 
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -120,6 +123,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     if FLAGS.use_tpu:
       predict_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
+          loss=loss,
           predictions=logits,
           scaffold_fn=scaffold_fn)
     else:
