@@ -113,6 +113,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     
     scaffold_fn = None
 
+    print('logits ', logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
       # Dummy spec, only for caching checkpoint purpose
       return tf.estimator.EstimatorSpec(
