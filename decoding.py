@@ -54,17 +54,17 @@ def create_hp_and_estimator(
 
   config = t2t_trainer.create_run_config(hp)
   hp.add_hparam("model_dir", config.model_dir)
-  estimator = create_estimator(
-      FLAGS.model,
-      hp,
-      checkpoint_path)
-
-  # estimator = trainer_lib.create_estimator(
+  # estimator = create_estimator(
   #     FLAGS.model,
   #     hp,
-  #     t2t_trainer.create_run_config(hp),
-  #     decode_hparams=decode_hp,
-  #     use_tpu=FLAGS.use_tpu)
+  #     checkpoint_path)
+
+  estimator = trainer_lib.create_estimator(
+      FLAGS.model,
+      hp,
+      t2t_trainer.create_run_config(hp),
+      decode_hparams=decode_hp,
+      use_tpu=FLAGS.use_tpu)
   return hp, decode_hp, estimator
 
 def create_estimator(model_name, hparams, init_checkpoint):
@@ -445,7 +445,7 @@ def evaluate_from_file_fn(estimator,
         batch_output_ids.append(ids)
       np_output_ids = np.array(batch_output_ids, dtype=np.int32)
 
-
+      
       def eval_input_fn(params):
         print(params)
         dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np_ids, "targets": np_output_ids}))
@@ -459,8 +459,8 @@ def evaluate_from_file_fn(estimator,
 
         # dataset = dataset.map(
         #   lambda ex: ({"features": tf.reshape(ex["inputs"], (length, 1, 1)), "labels": tf.reshape(ex["targets"], (length, 1, 1))}))
-        # dataset = dataset.batch(params['batch_size'])
-        dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
+        dataset = dataset.batch(params['batch_size'])
+        # dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
   # try:
   estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
