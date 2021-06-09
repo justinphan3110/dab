@@ -183,7 +183,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
               from_logits=True, reduction='none')
 
     mask = tf.math.equal(features['targets'], 0)
-    mask = 1.0 - mask
+    mask = 1.0 - tf.cast(mask, dtype=tf.float32)
 
 
     loss = loss_object(features['targets'], logits)
@@ -191,7 +191,7 @@ def get_model_fn(model_name, hparams, init_checkpoint):
 
     mask = tf.math.reduce_sum(loss, axis=1, keepdims=True)
     loss = tf.math.reduce_sum(loss, axis=1, keepdims=True) / mask
-    
+
     loss = tf.reshape(loss, [-1, 1])
     # (4,256,1,1)
 
