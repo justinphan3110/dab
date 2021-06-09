@@ -462,10 +462,10 @@ def evaluate_from_file_fn(estimator,
         # dataset = dataset.batch(params['batch_size'])
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
-  try:
-    estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
-  except:
-    print("estimator evaluate done, global logits ", global_logits)
+  # try:
+  estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
+  # except:
+  #   print("estimator evaluate done, global logits ", global_logits)
   # print(loss)
 
   
