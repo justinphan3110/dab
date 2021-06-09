@@ -461,7 +461,7 @@ def evaluate_from_file_fn(estimator,
                         checkpoint_path=None):
   # decode_hp.batch_size = 10
   if not decode_hp.batch_size:
-    decode_hp.batch_size = 32
+    decode_hp.batch_size = 256
     tf.logging.info(
         "decode_hp.batch_size not specified; default=%d" % decode_hp.batch_size)
   # Inputs vocabulary is set to targets if there are no inputs in the problem,
