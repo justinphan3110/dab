@@ -54,17 +54,17 @@ def create_hp_and_estimator(
 
   config = t2t_trainer.create_run_config(hp)
   hp.add_hparam("model_dir", config.model_dir)
-  # estimator = create_estimator(
-  #     FLAGS.model,
-  #     hp,
-  #     checkpoint_path)
-
-  estimator = trainer_lib.create_estimator(
+  estimator = create_estimator(
       FLAGS.model,
       hp,
-      t2t_trainer.create_run_config(hp),
-      decode_hparams=decode_hp,
-      use_tpu=FLAGS.use_tpu)
+      checkpoint_path)
+
+  # estimator = trainer_lib.create_estimator(
+  #     FLAGS.model,
+  #     hp,
+  #     t2t_trainer.create_run_config(hp),
+  #     decode_hparams=decode_hp,
+  #     use_tpu=FLAGS.use_tpu)
   return hp, decode_hp, estimator
 
 def create_estimator(model_name, hparams, init_checkpoint):
@@ -91,6 +91,56 @@ def create_estimator(model_name, hparams, init_checkpoint):
   return estimator
 
 global_logits = None
+
+
+def get_scaffold_fn(ckpt_path):
+  variable_map = get_variable_map(ckpt_path)
+
+  def scaffold_fn():
+    tf.train.init_from_checkpoint(ckpt_path, variable_map)
+    return tf.train.Scaffold()
+
+  return scaffold_fn
+
+
+def get_variable_map(ckpt_path):
+  """Initialize variables from given directory."""
+
+  def _get_body_name(var_name):
+    if '/body/' not in var_name:
+      return var_name
+    body_name = var_name.split('/body/')
+    assert len(body_name) == 2, var_name
+    return body_name[-1]
+
+  ckpt_vars = {}
+  for var_name, shape in tf.train.list_variables(ckpt_path):
+    ckpt_vars[_get_body_name(var_name)] = var_name, shape
+
+  variable_map = {}
+  fails = []
+  for var in tf.contrib.framework.get_trainable_variables():
+    model_var_name = var.op.name
+    model_var_body_name = _get_body_name(model_var_name)
+    if model_var_body_name in ckpt_vars:
+      ckpt_var_name, shape = ckpt_vars[model_var_body_name]
+      assert var.shape.as_list() == list(shape)
+      tf.logging.info('>>> LOAD ckpt var {} to model var {}'.format(
+          ckpt_var_name, model_var_name))
+      variable_map[ckpt_var_name] = var
+    else:
+      fails.append(model_var_name)
+
+  for model_var_name in fails:
+    tf.logging.info('>>> FAIL to find {} in checkpoint'.format(
+        model_var_name))
+
+  if fails:
+    raise ValueError('Failed to initialize from checkpoint.')
+
+  return variable_map
+
+
 
 def get_model_fn(model_name, hparams, init_checkpoint):
   """Get model fn."""
@@ -119,15 +169,29 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     global_logits = logits
 
     # Accumulate losses
-    loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
+    loss_ = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
     
-    scaffold_fn = None
+    scaffold_fn = get_scaffold_fn(init_checkpoint)
     
     # scaffold_fn = (this_model.get_scaffold_fn(init_checkpoint)
     #                if FLAGS.load_checkpoint else None)
 
 
     print('logits ', logits)
+
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+              from_logits=True, reduction='none')
+
+    loss = loss_object(features['targets'], logits)
+
+    loss = tf.math.reduce_mean(loss, axis=1, keepdims=True)
+    loss = tf.reshape(loss, [-1, 1])
+    # (4,256,1,1)
+
+    
+    
+    # loss = tf.math.reduce_sum(loss).numpy()
+    
     if mode == tf.estimator.ModeKeys.TRAIN:
       # Dummy spec, only for caching checkpoint purpose
       return tf.estimator.EstimatorSpec(
@@ -138,9 +202,10 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     if FLAGS.use_tpu:
       predict_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
-          loss=loss,
-          predictions=logits,
+          loss=loss_,
+          predictions={"logits": logits, "targets": features['targets'], "loss": loss},
           scaffold_fn=scaffold_fn)
+      print("predict_spec in model_fn ", predict_spec)
     else:
       scaffold_fn()
       predict_spec = tf.estimator.EstimatorSpec(
@@ -405,22 +470,20 @@ def evaluate_from_file_fn(estimator,
   outfilename = decoding._add_shard_to_filename(targets_file, decode_hp)
 
   tf.logging.info("Performing decoding from file (%s)." % filename)
-  if has_input:
-    sorted_inputs, _ = decoding._get_sorted_inputs(
-        filename, decode_hp.delimiter)
-    if outfilename:
-      sorted_outputs, _ = decoding._get_sorted_inputs(outfilename, decode_hp.delimiter)
-  else:
-    sorted_inputs = decoding._get_language_modeling_inputs(
-        filename, decode_hp.delimiter, repeat=decode_hp.num_decodes)
+  inputs = []
+  targets = []
+
+  for i, t in zip(open(inputs_file, encoding='utf-8'), open(targets_file, encoding='utf-8')):
+    inputs.append(i)
+    targets.append(t)
+
 
   if estimator.config.use_tpu:
     length = getattr(hparams, "length", 0) or hparams.max_length
-    length = 256
     batch_ids = []
 
     # Get ids and input function for prediction
-    for line in sorted_inputs:
+    for line in inputs:
       if has_input:
         ids = inputs_vocab.encode(line.strip()) + [1]
       else:
@@ -434,36 +497,53 @@ def evaluate_from_file_fn(estimator,
 
     # Get ids of output and function for evaluation
     batch_output_ids = []
-    if outfilename:
-      for line in sorted_outputs:
-        if has_input:
-          ids = inputs_vocab.encode(line.strip()) + [1]
-        if len(ids) < length:
-          ids.extend([0] * (length - len(ids)))
-        else:
-          ids = ids[:length]
-        batch_output_ids.append(ids)
-      np_output_ids = np.array(batch_output_ids, dtype=np.int32)
+    for line in targets:
+      if has_input:
+        ids = inputs_vocab.encode(line.strip()) + [1]
+      if len(ids) < length:
+        ids.extend([0] * (length - len(ids)))
+      else:
+        ids = ids[:length]
+      batch_output_ids.append(ids)
+    np_output_ids = np.array(batch_output_ids, dtype=np.int32)
 
       
-      def eval_input_fn(params):
-        print(params)
-        dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np_ids, "targets": np_output_ids}))
-        # dataset = dataset.map(
-        #   lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
+    def eval_input_fn(params):
+      print(params)
+      dataset = tf.data.Dataset.from_tensor_slices(({"inputs": np_ids, "targets": np_output_ids}))
+      # dataset = dataset.map(
+      #   lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
-        dataset = dataset.map(
-          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, 
-            tf.reshape(ex["targets"], (length, 1, 1))) )
+      dataset = dataset.map(
+        lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, 
+          tf.reshape(ex["targets"], (length, 1, 1))))
 
 
-        # dataset = dataset.map(
-        #   lambda ex: ({"features": tf.reshape(ex["inputs"], (length, 1, 1)), "labels": tf.reshape(ex["targets"], (length, 1, 1))}))
-        dataset = dataset.batch(params['batch_size'])
-        # dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
-        return dataset
+      # dataset = dataset.map(
+      #   lambda ex: ({"features": tf.reshape(ex["inputs"], (length, 1, 1)), "labels": tf.reshape(ex["targets"], (length, 1, 1))}))
+      # dataset = dataset.batch(params['batch_size'])
+      dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
+      return dataset
   # try:
-  estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
+  predict_specs = estimator.predict(eval_input_fn, yield_single_examples=False, checkpoint_path=checkpoint_path)
+  
+  # print(predict_specs)
+  # print(len(predict_specs))
+
+  tf.logging.info("Writing loss into %s" % loss_to_file)
+  outfile = tf.gfile.Open(loss_to_file, "w")
+  for predict_spec in predict_specs:
+  # print(predict_spec['logits'].shape)
+  # print(predict_spec['targets'].shape)
+    print(predict_spec['loss'].shape)
+    for l in predict_spec['loss']:
+      outfile.write(f'{l[0]}\n')
+  outfile.flush()
+  outfile.close()
+
+  
+  
+  
   # except:
   #   print("estimator evaluate done, global logits ", global_logits)
   # print(loss)
