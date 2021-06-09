@@ -182,9 +182,16 @@ def get_model_fn(model_name, hparams, init_checkpoint):
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
               from_logits=True, reduction='none')
 
-    loss = loss_object(features['targets'], logits)
+    mask = tf.math.equal(features['targets'], 0)
+    mask = 1.0 - mask
 
-    loss = tf.math.reduce_mean(loss, axis=1, keepdims=True)
+
+    loss = loss_object(features['targets'], logits)
+    loss *= mask
+
+    mask = tf.math.reduce_sum(loss, axis=1, keepdims=True)
+    loss = tf.math.reduce_sum(loss, axis=1, keepdims=True) / mask
+    
     loss = tf.reshape(loss, [-1, 1])
     # (4,256,1,1)
 
@@ -538,6 +545,7 @@ def evaluate_from_file_fn(estimator,
     print(predict_spec['loss'].shape)
     for l in predict_spec['loss']:
       outfile.write(f'{l[0]}\n')
+
   outfile.flush()
   outfile.close()
 
