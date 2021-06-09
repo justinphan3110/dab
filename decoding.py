@@ -90,6 +90,7 @@ def create_estimator(model_name, hparams, init_checkpoint):
 
   return estimator
 
+global_logits = None
 
 def get_model_fn(model_name, hparams, init_checkpoint):
   """Get model fn."""
@@ -115,11 +116,15 @@ def get_model_fn(model_name, hparams, init_checkpoint):
 
     print("features ", features)
     logits, losses_dict = this_model(features)
+    global_logits = logits
 
     # Accumulate losses
     loss = sum(losses_dict[key] for key in sorted(losses_dict.keys()))
     
-    scaffold_fn = None
+    # scaffold_fn = None
+    
+    scaffold_fn = (this_model.get_scaffold_fn(init_checkpoint)
+                   if FLAGS.load_checkpoint else None)
 
 
     print('logits ', logits)
@@ -448,7 +453,8 @@ def evaluate_from_file_fn(estimator,
         #   lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
 
         dataset = dataset.map(
-          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, tf.reshape(ex["targets"], (length, 1, 1))) )
+          lambda ex: ({"inputs": tf.reshape(ex["inputs"], (length, 1, 1)), "targets": tf.reshape(ex["targets"], (length, 1, 1))}, 
+            tf.reshape(ex["targets"], (length, 1, 1))) )
 
 
         # dataset = dataset.map(
@@ -456,8 +462,10 @@ def evaluate_from_file_fn(estimator,
         # dataset = dataset.batch(params['batch_size'])
         dataset= dataset.apply(tf.contrib.data.batch_and_drop_remainder(params['batch_size']))
         return dataset
-
-  estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
+  try:
+    estimator.evaluate(eval_input_fn, steps=1, checkpoint_path=checkpoint_path)
+  except:
+    print("estimator evaluate done, global logits ", global_logits)
   # print(loss)
 
   
