@@ -1034,7 +1034,7 @@ class FbWikiAndBookM45TranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k
 
 _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
   ["",("MultiCCAligned.en.fixed.filter.filtertest.processed", "MultiCCAligned.vi.fixed.filter.filtertest.processed")],
-  ["", ("train.en", "train.vi")]
+  ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.en", "train.vi")]
   ]
 
 @registry.register_problem
@@ -1051,7 +1051,8 @@ class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt3
 
 _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
   ["",("MultiCCAligned.vi.fixed.filter.filtertest.processed", "MultiCCAligned.en.fixed.filter.filtertest.processed")],
-  ["", ("train.vi", "train.en")]
+    ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.vi", "train.en")]
+
   ]
 
 @registry.register_problem
