@@ -1029,3 +1029,39 @@ class FbWikiAndBookM45TranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k
     train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
     return _FB_WIKI_AND_BOOK_M45_VIEN_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
 
+
+# --------------------------16.06.21---------
+
+_PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
+  ["",("MultiCCAligned.en.fixed.filter.filtertest.processed", "MultiCCAligned.vi.fixed.filter.filtertest.processed")],
+  ["", ("train.en", "train.vi")]
+  ]
+
+@registry.register_problem
+class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt32k):
+  """Problem spec for IWSLT'15 En-Vi translation."""
+
+  @property
+  def approx_vocab_size(self):
+    return 2**15  # 32768
+
+  def source_data_files(self, dataset_split):
+    train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
+    return _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
+
+_PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
+  ["",("MultiCCAligned.vi.fixed.filter.filtertest.processed", "MultiCCAligned.en.fixed.filter.filtertest.processed")],
+  ["", ("train.vi", "train.en")]
+  ]
+
+@registry.register_problem
+class PseudoLabelMulticcTranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k):
+  """Problem spec for IWSLT'15 En-Vi translation."""
+
+  @property
+  def approx_vocab_size(self):
+    return 2**15  # 32768
+
+  def source_data_files(self, dataset_split):
+    train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
+    return _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS if train else _VIEN_TEST_DATASETS
