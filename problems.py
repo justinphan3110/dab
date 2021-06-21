@@ -1033,7 +1033,7 @@ class FbWikiAndBookM45TranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k
 # --------------------------16.06.21---------
 
 _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
-  ["",("MultiCCAligned.en.fixed.filter.filtertest.processed", "MultiCCAligned.vi.fixed.filter.filtertest.processed")],
+  ["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")],
   ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.en", "train.vi")]
   ]
 
@@ -1050,7 +1050,7 @@ class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt3
     return _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
 
 _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
-  ["",("MultiCCAligned.vi.fixed.filter.filtertest.processed", "MultiCCAligned.en.fixed.filter.filtertest.processed")],
+  ["",("MultiCCAligned.vi.fixed.filter.filtertest.subset", "MultiCCAligned.en.fixed.filter.filtertest.subset")],
     ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.vi", "train.en")]
 
   ]
