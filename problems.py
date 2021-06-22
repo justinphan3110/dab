@@ -191,10 +191,10 @@ class Multiccmin20highbleuClass11TranslateVienIwslt32k(translate_envi.TranslateE
 
 # --------------------------28.03.21---------
 
-_MULTICC_ENVI_TRAIN_DATASETS = [[
-    "",  # pylint: disable=line-too-long
-    ("MultiCCAligned.en.fixed.filter.filtertest", "MultiCCAligned.vi.fixed.filter.filtertest")
-]]
+_MULTICC_ENVI_TRAIN_DATASETS = [
+
+  ['', ('train.en', 'train.vi')]
+]
 
 @registry.register_problem
 class MulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt32k):
@@ -1032,10 +1032,22 @@ class FbWikiAndBookM45TranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k
 
 # --------------------------16.06.21---------
 
-_PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
-  ["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")],
-  ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.en", "train.vi")]
-  ]
+# _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
+#   # ["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")],
+#   ['https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz', ('train.en', 'train.vi')]
+#   ]
+
+_PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [[
+    "https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",  # pylint: disable=line-too-long
+    ("train.en", "train.vi")
+], 
+["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")]
+]
+
+
+# See this PR on github for some results with Transformer on this Problem.
+# https://github.com/tensorflow/tensor2tensor/pull/611
+
 
 @registry.register_problem
 class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt32k):
@@ -1049,11 +1061,12 @@ class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt3
     train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
     return _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
 
-_PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
-  ["",("MultiCCAligned.vi.fixed.filter.filtertest.subset", "MultiCCAligned.en.fixed.filter.filtertest.subset")],
-    ["https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",("train.vi", "train.en")]
-
-  ]
+_PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [[
+    "https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",  # pylint: disable=line-too-long
+    ("train.vi", "train.en")
+], 
+["",("MultiCCAligned.vi.fixed.filter.filtertest.subset", "MultiCCAligned.en.fixed.filter.filtertest.subset")]
+]
 
 @registry.register_problem
 class PseudoLabelMulticcTranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k):
