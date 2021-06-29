@@ -65,6 +65,8 @@ class Transformerextratokens(transformer.Transformer):
       log_warn("Without a Problem, T2TModel.bottom is a passthrough.")
       return features
 
+    hparams = self._hparams
+
     transformed_features = collections.OrderedDict()
     all_previous_modalities = []
     target_modality = _create_target_modality(self._problem_hparams.modality)
@@ -120,7 +122,7 @@ class Transformerextratokens(transformer.Transformer):
     batch_size = inputs_shape[0]
 
 
-    num_special_tokens = batch_size
+    num_special_tokens = hparams['extra_tokens']
     special_token_id = 21223
 
     special_tokens = tf.constant([[ [[21223+x]] for x in range(0, num_special_tokens)]])
