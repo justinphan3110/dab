@@ -8,6 +8,7 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.models import transformer
 from tensor2tensor.utils import registry
 from tensor2tensor.models import transformer
+from tensor2tensor.layers import modalities
 
 import problems
 import tensorflow as tf
@@ -18,7 +19,7 @@ import six
 
 flags = tf.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_string('extra_tokens', 32 , 'extra tokens to be added into encoding vectors')
+flags.DEFINE_integer('extra_tokens', 32 , 'extra tokens to be added into encoding vectors')
 
 
 
