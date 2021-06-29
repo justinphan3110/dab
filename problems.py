@@ -1037,17 +1037,25 @@ class FbWikiAndBookM45TranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k
 #   ['https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz', ('train.en', 'train.vi')]
 #   ]
 
-_PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [[
-    "https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",  # pylint: disable=line-too-long
-    ("train.en", "train.vi")
-], 
-["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")]
+# _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [[
+#     "",  # pylint: disable=line-too-long
+#     ("train.en", "train.vi")
+# ], 
+
+# ["",("MultiCCAligned.en.fixed.filter.filtertest.subset", "MultiCCAligned.vi.fixed.filter.filtertest.subset")]
+
+# ]
+
+
+# _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [[
+#     "",  # pylint: disable=line-too-long
+#     ("train.en", "train.vi")
+# ]]
+
+_PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
+    ['', ('train.en', 'train.vi')],  # original.
+    ['', ('MultiCCAligned.en.fixed.filter.filtertest.subset', 'MultiCCAligned.vi.fixed.filter.filtertest.subset')]
 ]
-
-
-# See this PR on github for some results with Transformer on this Problem.
-# https://github.com/tensorflow/tensor2tensor/pull/611
-
 
 @registry.register_problem
 class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt32k):
@@ -1061,12 +1069,13 @@ class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt3
     train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
     return _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
 
-_PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [[
-    "https://github.com/stefan-it/nmt-en-vi/raw/master/data/train-en-vi.tgz",  # pylint: disable=line-too-long
-    ("train.vi", "train.en")
-], 
-["",("MultiCCAligned.vi.fixed.filter.filtertest.subset", "MultiCCAligned.en.fixed.filter.filtertest.subset")]
+_PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
+    ['', ('train.vi', 'train.en')],  # original.
+    ['', ('MultiCCAligned.vi.fixed.filter.filtertest.subset', 'MultiCCAligned.en.fixed.filter.filtertest.subset')]
 ]
+
+
+
 
 @registry.register_problem
 class PseudoLabelMulticcTranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k):
