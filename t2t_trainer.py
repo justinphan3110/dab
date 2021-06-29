@@ -35,7 +35,7 @@ def transformer_tall9_extra_tokens():
   hparams.filter_size = 3072
   hparams.num_hidden_layers = 9
   hparams.num_heads = 12
-  hparams.extra_tokens = FLAGS.extra_tokens
+  hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
   return hparams
 
 if __name__ == '__main__':
