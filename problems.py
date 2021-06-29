@@ -6,6 +6,8 @@ from __future__ import division
 from tensor2tensor.data_generators import translate_envi
 from tensor2tensor.utils import registry
 
+from tensor2tensor.data_generators import translate
+from tensor2tensor.data_generators import problem
 
 # End-of-sentence marker.
 EOS = translate_envi.EOS
@@ -1058,7 +1060,7 @@ _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS = [
 ]
 
 @registry.register_problem
-class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt32k):
+class PseudoLabelMulticcTranslateEnviIwslt32k(translate.TranslateProblem):
   """Problem spec for IWSLT'15 En-Vi translation."""
 
   @property
@@ -1066,8 +1068,11 @@ class PseudoLabelMulticcTranslateEnviIwslt32k(translate_envi.TranslateEnviIwslt3
     return 2**15  # 32768
 
   def source_data_files(self, dataset_split):
-    train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
+    train = dataset_split == problem.DatasetSplit.TRAIN
     return _PSEUDO_LABEL_MULTICC_ENVI_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
+
+
+
 
 _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
     ['', ('train.vi', 'train.en')],  # original.
@@ -1075,10 +1080,8 @@ _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS = [
 ]
 
 
-
-
 @registry.register_problem
-class PseudoLabelMulticcTranslateVienIwslt32k(translate_envi.TranslateEnviIwslt32k):
+class PseudoLabelMulticcTranslateVienIwslt32k(translate.TranslateProblem):
   """Problem spec for IWSLT'15 En-Vi translation."""
 
   @property
@@ -1086,5 +1089,5 @@ class PseudoLabelMulticcTranslateVienIwslt32k(translate_envi.TranslateEnviIwslt3
     return 2**15  # 32768
 
   def source_data_files(self, dataset_split):
-    train = dataset_split == translate_envi.problem.DatasetSplit.TRAIN
-    return _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS if train else _VIEN_TEST_DATASETS
+    train = dataset_split == problem.DatasetSplit.TRAIN
+    return _PSEUDO_LABEL_MULTICC_VIEN_TRAIN_DATASETS if train else _ENVI_TEST_DATASETS
