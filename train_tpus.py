@@ -9,7 +9,6 @@ import subprocess
 
 TPU_ADDRESSES = [
     '10.35.148.218'
-
 ]
 
 task = 'envi'
@@ -27,4 +26,4 @@ for subset in range(0,1):
     hparams_set = 'transformer_tall9'
     problem = f'pseudo_label_multicc_translate_{task}_iwslt32k'
     sleep(5)
-    subprocess.Popen(shlex.split(f"python t2t_trainer.py --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --cloud_tpu_name={TPU_ADDRESS} --use_tpu=grpc://{use_tpu}:8470"))
+    subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --cloud_tpu_name={TPU_ADDRESS} --use_tpu=grpc://{use_tpu}:8470"))
