@@ -26,7 +26,7 @@ TPU_ADDRESSES = [
 ]
 
 task = 'envi'
-for subset in range(0,3):
+for subset in range(0,1):
     total_train_steps = 500000
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[subset]
