@@ -8,8 +8,8 @@ import tensorflow as tf
 
 flags = tf.flags
 FLAGS = flags.FLAGS
-# flags.DEFINE_string('task', 'envi' , 'task to train')
-# flags.DEFINE_integer('subset', 5, 'number of subset')
+# flags.DEFINE_string('index', 'envi' , 'task to train')
+flags.DEFINE_integer('index', 0, 'index to train')
 # os.system("pip install google.colab")
 
 TPU_ADDRESSES = [
@@ -26,6 +26,8 @@ TPU_ADDRESSES = [
 ]
 
 task = 'envi'
+
+l = []
 for subset in range(0,5):
     total_train_steps = 500000
     use_tpu = True
@@ -39,7 +41,8 @@ for subset in range(0,5):
     hparams_set = 'transformer_tall9'
     problem = f'pseudo_label_multicc_translate_{task}_iwslt32k'
     # sleep(5)
-    subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
+    l.append(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt")
+    # subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
 
 task = 'vien'
 for subset in range(0,5):
@@ -55,4 +58,7 @@ for subset in range(0,5):
     hparams_set = 'transformer_tall9'
     problem = f'pseudo_label_multicc_translate_{task}_iwslt32k'
     # sleep(5)
-    subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
+    l.append(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt")
+
+os.system(l[FLAGS.index])
+    # subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
