@@ -11,6 +11,10 @@ FLAGS = flags.FLAGS
 # flags.DEFINE_string('index', 'envi' , 'task to train')
 flags.DEFINE_integer('index', 0, 'index to train')
 # os.system("pip install google.colab")
+from google.colab import auth
+auth.authenticate_user()
+
+
 
 TPU_ADDRESSES = [
     '10.104.150.114',
@@ -37,7 +41,7 @@ for subset in range(0,5):
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
                 'learning_rate_constant=2.0').format(2000000)
-    print(hparams_str)
+    # print(hparams_str)
     hparams_set = 'transformer_tall9'
     problem = f'pseudo_label_multicc_translate_{task}_iwslt32k'
     # sleep(5)
@@ -54,11 +58,12 @@ for subset in range(0,5):
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
                 'learning_rate_constant=2.0').format(2000000)
-    print(hparams_str)
+    # print(hparams_str)
     hparams_set = 'transformer_tall9'
     problem = f'pseudo_label_multicc_translate_{task}_iwslt32k'
     # sleep(5)
     l.append(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt")
 
+print(l[FLAGS.index])
 os.system(l[FLAGS.index])
     # subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
