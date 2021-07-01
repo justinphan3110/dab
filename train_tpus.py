@@ -13,7 +13,7 @@ flags.DEFINE_integer('index', 0, 'index to train')
 os.system("pip install google-colab")
 from google.colab import auth
 auth.authenticate_user()
-
+print('authenticated')
 
 
 TPU_ADDRESSES = [
