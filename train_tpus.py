@@ -52,7 +52,7 @@ task = 'vien'
 for subset in range(0,5):
     total_train_steps = 500000
     use_tpu = True
-    TPU_ADDRESS = TPU_ADDRESSES[4+subset]
+    TPU_ADDRESS = TPU_ADDRESSES[5+subset]
     train_output_dir = f'gs://best_vi_translation/checkpoints/pseudo_label_multicc_translate_{task}_iwslt32k/subset/{subset}/'
     train_data_dir = f'gs://best_vi_translation/data/pseudo_label_multicc_translate_{task}_iwslt32k/subset/{subset}/'
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
