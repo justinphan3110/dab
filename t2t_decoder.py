@@ -27,6 +27,13 @@ def transformer_tall9():
 
 
 @registry.register_hparams
+def transformer_extra_tokens():
+  hparams = transformer.transformer_base()
+  hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
+
+  return hparams
+
+@registry.register_hparams
 def transformer_tall9_extra_tokens():
   hparams = transformer.transformer_big()
   hparams.hidden_size = 768
