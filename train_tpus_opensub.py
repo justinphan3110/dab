@@ -10,6 +10,8 @@ flags = tf.flags
 FLAGS = flags.FLAGS
 # flags.DEFINE_string('index', 'envi' , 'task to train')
 flags.DEFINE_integer('index', 0, 'index to train')
+flags.DEFINE_string('task', 'envi', 'type of task to train')
+
 # os.system("pip install google-colab")
 from google.colab import auth
 auth.authenticate_user()
@@ -24,7 +26,7 @@ TPU_ADDRESSES = [
     '10.70.189.226',
 ]
 
-task = 'envi'
+task = FLAGS.task
 
 l = []
 for index in range(0,5):
