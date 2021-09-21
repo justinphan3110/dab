@@ -32,7 +32,7 @@ for index in range(0,5):
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
     train_output_dir = f'gs://best_vi_translation/checkpoints/opensubtitles_{task}/{index}/'
-    train_data_dir = f'gs://best_vi_translation/data/opensubtitles_{task[0:2]}_{task[2:4]}/'
+    train_data_dir = f'gs://best_vi_translation/data/opensubtitles_{task[0:2]}_{task[2:4]}/{index}/'
 
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
