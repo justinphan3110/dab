@@ -29,8 +29,9 @@ for index in range(0,1):
     total_train_steps = 500000
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
-    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_envi_iwslt32k_tall9_v2/'
-    train_data_dir = f'gs://best_vi_translation/data/translate_envi_iwslt32k_v2/'
+    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_envi_iwslt32k_tall9_v2_2nd_release/'
+    # train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
+    train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
 
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
