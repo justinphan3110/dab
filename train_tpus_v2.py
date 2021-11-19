@@ -19,7 +19,7 @@ print('authenticated')
 
 
 TPU_ADDRESSES = [
-    '10.49.227.90',
+    '10.19.87.106',
 ]
 
 task = FLAGS.task
