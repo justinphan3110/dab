@@ -54,6 +54,16 @@ def transformer_tall24_12():
   return hparams
 
 @registry.register_hparams
+def transformer_tall12_24():
+  hparams = transformer.transformer_big()
+  hparams.hidden_size = 768
+  hparams.filter_size = 3072
+  hparams.num_heads = 16
+  hparams.num_encoder_layers = 12
+  hparams.num_decocer_layers = 24
+  return hparams
+
+@registry.register_hparams
 def transformer_tall24_24():
   hparams = transformer.transformer_big()
   hparams.hidden_size = 1024
