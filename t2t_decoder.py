@@ -43,6 +43,28 @@ def transformer_tall9_extra_tokens():
   hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
   return hparams
 
+@registry.register_hparams
+def transformer_tall24_12():
+  hparams = transformer.transformer_big()
+  hparams.hidden_size = 768
+  hparams.filter_size = 3072
+  hparams.num_heads = 16
+  hparams.num_encoder_layers = 24
+  hparams.num_decocer_layers = 12
+  return hparams
+
+@registry.register_hparams
+def transformer_tall24_24():
+  hparams = transformer.transformer_big()
+  hparams.hidden_size = 1024
+  hparams.filter_size = 4096
+  hparams.num_hidden_layers = 24
+  hparams.num_heads = 16
+  # hparams.num_encoder_layers = 24
+  # hparams.num_decocer_layers = 12
+  return hparams
+
+
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
   # tf.app.run(t2t_decoder.main)
