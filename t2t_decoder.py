@@ -27,6 +27,20 @@ flags.DEFINE_integer('extra_tokens', 32 , 'extra tokens to be added into encodin
 
 
 @registry.register_hparams
+def transformer_tall_12_24():
+  hparams = transformer_tall9()
+  hparams.num_encoder_layers = 12
+  hparams.num_decoder_layers = 24
+  return hparams
+
+@registry.register_hparams
+def transformer_tall_24_12():
+  hparams = transformer_tall9()
+  hparams.num_encoder_layers = 24
+  hparams.num_decoder_layers = 12
+  return hparams
+
+@registry.register_hparams
 def transformer_extra_tokens():
   hparams = transformer.transformer_base()
   hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
@@ -41,37 +55,6 @@ def transformer_tall9_extra_tokens():
   hparams.num_hidden_layers = 9
   hparams.num_heads = 12
   hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
-  return hparams
-
-@registry.register_hparams
-def transformer_tall24_12():
-  hparams = transformer.transformer_big()
-  hparams.hidden_size = 768
-  hparams.filter_size = 3072
-  hparams.num_heads = 16
-  hparams.num_encoder_layers = 24
-  hparams.num_decocer_layers = 12
-  return hparams
-
-@registry.register_hparams
-def transformer_tall12_24():
-  hparams = transformer.transformer_big()
-  hparams.hidden_size = 768
-  hparams.filter_size = 3072
-  hparams.num_heads = 16
-  hparams.num_encoder_layers = 12
-  hparams.num_decocer_layers = 24
-  return hparams
-
-@registry.register_hparams
-def transformer_tall24_24():
-  hparams = transformer.transformer_big()
-  hparams.hidden_size = 1024
-  hparams.filter_size = 4096
-  hparams.num_hidden_layers = 24
-  hparams.num_heads = 16
-  # hparams.num_encoder_layers = 24
-  # hparams.num_decocer_layers = 12
   return hparams
 
 
