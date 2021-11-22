@@ -28,14 +28,14 @@ flags.DEFINE_integer('extra_tokens', 32 , 'extra tokens to be added into encodin
 
 @registry.register_hparams
 def transformer_tall_12_24():
-  hparams = transformer_tall9()
+  hparams = transformer.transformer_tall9()
   hparams.num_encoder_layers = 12
   hparams.num_decoder_layers = 24
   return hparams
 
 @registry.register_hparams
 def transformer_tall_24_12():
-  hparams = transformer_tall9()
+  hparams = transformer.transformer_tall9()
   hparams.num_encoder_layers = 24
   hparams.num_decoder_layers = 12
   return hparams
