@@ -35,6 +35,24 @@ def transformer_tall9_extra_tokens():
   hparams.add_hparam("extra_tokens", FLAGS.extra_tokens)
   return hparams
 
+
+
+# 3-15, 6-12, 9-9, 12-6, 15-3
+@registry.register_hparams
+def transformer_tall_12_24():
+  hparams = transformer_tall9()
+  hparams.num_encoder_layers = 12
+  hparams.num_decoder_layers = 24
+  return hparams
+
+@registry.register_hparams
+def transformer_tall_24_12():
+  hparams = transformer_tall9()
+  hparams.num_encoder_layers = 24
+  hparams.num_decoder_layers = 12
+  return hparams
+
+
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
   tf.app.run(t2t_trainer.main)
