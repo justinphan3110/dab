@@ -19,7 +19,7 @@ print('authenticated')
 
 
 TPU_ADDRESSES = [
-    '10.19.87.106',
+    '10.52.19.138',
 ]
 
 task = FLAGS.task
@@ -30,12 +30,13 @@ for index in range(0,1):
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
     train_output_dir = f'gs://vien-translation/envi_iswlt15/models_v2/TOK/{task}/tall12_24/model.ckpt-500000'
+    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_envi_iwslt32k_tall_12_24_2nd_release/model.ckpt-500000'
     train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release'
 
     hparams_str = ('learning_rate_cosine_cycle_steps={},'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
                 'learning_rate_constant=2.0').format(2000000)
-    hparams_set = f'transformer_tall12_24'
+    hparams_set = f'transformer_tall_12_24'
     model = 'transformer'
     problem = f'translate_envi_iwslt32k'
     # sleep(5)
