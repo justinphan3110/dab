@@ -28,7 +28,7 @@ TPU_ADDRESSES = [
 LEARNING_RATE_CONSTANTS = [
     '2.0',
     '1.0', 
-    '4.0'
+    '4.0',
 ]
 
 if FLAGS.index <= 2:
@@ -47,7 +47,7 @@ for index in range(0,len(TPU_ADDRESSES)):
     total_train_steps = 500000
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
-    LEARNING_RATE_CONSTANT = LEARNING_RATE_CONSTANTS[index]
+    LEARNING_RATE_CONSTANT = LEARNING_RATE_CONSTANTS[index % len(LEARNING_RATE_CONSTANTS)]
     
     train_output_dir = f'gs://best_vi_translation/checkpoints/translate_{task}_iwslt32k_tall_18_18_{LEARNING_RATE_CONSTANT}lr/'
     # train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
