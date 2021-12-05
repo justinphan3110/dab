@@ -38,7 +38,7 @@ else:
 
 print('Training Task ' + task)
 print('TPU Address' + TPU_ADDRESSES[FLAGS.index])
-print('LR : ' + LEARNING_RATE_CONSTANTS[FLAGS.index])
+print('LR : ' + LEARNING_RATE_CONSTANTS[FLAGS.index % len(LEARNING_RATE_CONSTANTS)])
 
 # task = FLAGS.task
 assert len(TPU_ADDRESSES) == len(LEARNING_RATE_CONSTANTS)
