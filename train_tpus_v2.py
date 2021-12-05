@@ -10,8 +10,6 @@ flags = tf.flags
 FLAGS = flags.FLAGS
 # flags.DEFINE_string('index', 'envi' , 'task to train')
 flags.DEFINE_integer('index', 0, 'index to train')
-flags.DEFINE_string('task', 'envi', 'type of task to train')
-
 # os.system("pip install google-colab")
 from google.colab import auth
 auth.authenticate_user()
@@ -19,23 +17,42 @@ print('authenticated')
 
 
 TPU_ADDRESSES = [
-    '10.19.87.106',
+    '10.7.143.146',
+    '10.13.130.210',
+    '10.111.251.154',
 ]
 
-task = FLAGS.task
+LEARNING_RATE_CONSTANTS = [
+    '2.0',
+    '1.0', 
+    '4.0'
+]
 
+if FLAGS.index <= 2:
+    task = 'envi'
+else:
+    task = 'vien'
+
+print('Training Task ' + task)
+print('TPU Address' + TPU_ADDRESSES[FLAGS.index])
+print('LR : ' + LEARNING_RATE_CONSTANTS[FLAGS.index])
+
+# task = FLAGS.task
+assert len(TPU_ADDRESSES) == len(LEARNING_RATE_CONSTANTS)
 l = []
-for index in range(0,1):
+for index in range(0,len(TPU_ADDRESSES)):
     total_train_steps = 500000
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
-    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_envi_iwslt32k_tall_12_24_2nd_release/'
+    LEARNING_RATE_CONSTANT = LEARNING_RATE_CONSTANTS[index]
+    
+    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_{task}_iwslt32k_tall_18_18_{LEARNING_RATE_CONSTANT}lr/'
     # train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
     train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
 
-    hparams_str = ('learning_rate_cosine_cycle_steps={},'
+    hparams_str = ('learning_rate_cosine_cycle_steps=2000000,'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
-                'learning_rate_constant=2.0').format(2000000)
+                'learning_rate_constant={}').format(LEARNING_RATE_CONSTANT)
     hparams_set = f'transformer_tall_12_24'
     model = 'transformer'
     problem = f'translate_envi_iwslt32k'
