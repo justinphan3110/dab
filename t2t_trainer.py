@@ -36,8 +36,13 @@ def transformer_tall9_extra_tokens():
   return hparams
 
 
+@registry.register_hparams
+def transformer_tall_18_18():
+  hparams = transformer.transformer_tall9()
+  hparams.num_encoder_layers = 18
+  hparams.num_decoder_layers = 18
+  return hparams
 
-# 3-15, 6-12, 9-9, 12-6, 15-3
 @registry.register_hparams
 def transformer_tall_12_24():
   hparams = transformer.transformer_tall9()
