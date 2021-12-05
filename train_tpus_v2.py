@@ -56,9 +56,9 @@ for index in range(0,len(TPU_ADDRESSES)):
     hparams_str = ('learning_rate_cosine_cycle_steps=2000000,'
                 'max_length=128,batch_size=4096,'  # real batch_size = 4096/128
                 'learning_rate_constant={}').format(LEARNING_RATE_CONSTANT)
-    hparams_set = f'transformer_tall_12_24'
+    hparams_set = f'transformer_tall_18_18'
     model = 'transformer'
-    problem = f'translate_envi_iwslt32k'
+    problem = f'translate_{task}_iwslt32k'
     # sleep(5)
     l.append(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model={model} --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu}")
     # subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
