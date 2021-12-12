@@ -44,7 +44,8 @@ for index in range(0,len(TPU_ADDRESSES)):
     TPU_ADDRESS = TPU_ADDRESSES[index]
     DROPOUT_RATE_CONSTANT = DROPOUT_RATE_CONSTANTS[index % len(DROPOUT_RATE_CONSTANTS)]
     
-    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_{task}_iwslt32k_tall_18_18_lr2_{'_'.join(map(str, DROPOUT_RATE_CONSTANT))}drop/'
+    dropout = '_'.join(map(str, DROPOUT_RATE_CONSTANT))
+    train_output_dir = f'gs://best_vi_translation/checkpoints/translate_{task}_iwslt32k_tall_18_18_lr2_{dropout}drop/'
     # train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
     train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
 
