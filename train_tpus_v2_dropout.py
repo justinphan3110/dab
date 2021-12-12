@@ -17,14 +17,11 @@ print('authenticated')
 
 
 TPU_ADDRESSES = [
-    '10.7.143.146',
-    '10.13.130.210',
-    '10.111.251.154',
-    '10.124.138.194',
-    '10.69.84.242',
-    '10.75.247.74',
+    '10.104.189.2',
+    '10.8.243.82',
+    '10.1.159.90',
+    '10.89.131.146',
 ]
-
 
 if FLAGS.index <= 1:
     task = 'envi'
@@ -63,7 +60,7 @@ for index in range(0,len(TPU_ADDRESSES)):
     # subprocess.Popen(shlex.split(f"python3 t2t_trainer.py --cloud_tpu_name=grpc://{TPU_ADDRESS}:8470 --model=transformer --hparams_set={hparams_set} --hparams={hparams_str} --train_steps={total_train_steps} --eval_steps=20 --problem={problem} --data_dir={train_data_dir} --output_dir={train_output_dir} --use_tpu={use_tpu} > nohup_{task}_{subset}.txt"))
 
 print(f"training {task}")
-print(f"drop out {DROPOUT_RATE_CONSTANTS[FLAGS.index % len(DROPOUT_RATE_CONSTANTS)}")
+print(f"drop out {DROPOUT_RATE_CONSTANTS[FLAGS.index % len(DROPOUT_RATE_CONSTANTS)]}")
 print(l[FLAGS.index])
 # os.system(f'gsutil cp gs://best_vi_translation/checkpoints/pseudo_label_multicc_translate_envi_iwslt32k/subset/{FLAGS.index}/model.ckpt-1000.index .')
 os.system(l[FLAGS.index])
