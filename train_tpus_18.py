@@ -36,7 +36,7 @@ for index in range(0,len(TPU_ADDRESSES)):
     use_tpu = True
     TPU_ADDRESS = TPU_ADDRESSES[index]
     
-    train_output_dir = f'gs://translationv2/models/{task}_tall_18_18/'
+    train_output_dir = f'gs://translationv2/models/{task}_tall_18_18_2m/'
     # train_data_dir = f'gs://best_vi_translation/data/translate_{task}_iwslt32k_v2_2nd_release/'
     train_data_dir = f'gs://translationv2/data/{task}_v2'
 
